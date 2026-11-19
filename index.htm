@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್ - ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್ & ಪಂಚಾಂಗ ಲೆಡ್ಜರ್ | Veda Astrolight</title>
+<link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#bf360c">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans Kannada & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kesari: {
+              50: '#fff8f1',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#e65100',
+              700: '#bf360c',
+              800: '#9a3412',
+              900: '#7c2d12',
+            },
+            maroon: {
+              800: '#6b1d14',
+              900: '#4a120c',
+            },
+            gold: {
+              400: '#fbbf24',
+              500: '#ffb300',
+              600: '#d97706',
+            },
+            cream: '#fffdf9'
+          },
+          fontFamily: {
+            sans: ['Poppins', 'Noto Sans Kannada', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #fffdf9;
+      background-image: radial-gradient(#fed7aa 0.65px, transparent 0.65px);
+      background-size: 20px 20px;
+      color: #2c1810;
+      font-family: 'Poppins', 'Noto Sans Kannada', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #fff8f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #fdba74;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e65100;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    .recording-pulse {
+      animation: pulseRing 1.5s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 4-Digit PIN Lock Overlay -->
+  <div id="pinLockOverlay" class="fixed inset-0 z-50 hidden bg-gradient-to-br from-maroon-900 via-kesari-800 to-maroon-800 flex items-center justify-center p-4">
+    <div class="bg-cream border-2 border-gold-500 rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+      <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-kesari-100 border-2 border-kesari-600 flex items-center justify-center text-3xl shadow-inner">
+        🕉️
+      </div>
+      <h2 class="text-xl font-bold text-maroon-900">ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್</h2>
+      <p class="text-xs text-kesari-800 mb-5">ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್ ತೆರೆಯಲು 4-ಅಂಕಿಯ PIN ನಮೂದಿಸಿ</p>
+      
+      <input type="password" id="pinUnlockInput" maxlength="4" inputmode="numeric" pattern="[0-9]*"
+        oninput="checkPinAutoSubmit(this)"
+        placeholder="••••"
+        class="w-40 mx-auto text-center text-2xl tracking-[0.6em] font-bold py-2.5 px-4 rounded-xl border-2 border-kesari-400 focus:border-kesari-600 focus:outline-none bg-white text-maroon-900 mb-3" />
+      
+      <p id="pinErrorMsg" class="text-xs text-red-600 font-semibold h-4 mb-3"></p>
+      
+      <button type="button" onclick="verifyPin()" class="w-full py-2.5 bg-gradient-to-r from-kesari-600 to-maroon-800 text-white font-semibold rounded-xl shadow-md hover:opacity-95 transition">
+        🔓 ಅನ್‌ಲಾಕ್ ಮಾಡಿ (Unlock)
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-gradient-to-r from-maroon-900 via-kesari-700 to-kesari-600 text-white shadow-lg border-b-2 border-gold-500">
+    <div class="max-w-7xl mx-auto px-3 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-2.5">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-kesari-600 flex items-center justify-center text-2xl shadow-md border border-gold-300 shrink-0">
+          🕉️
+        </div>
+        <div>
+          <h1 class="text-base sm:text-xl font-bold tracking-tight leading-tight text-white">
+            ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್ - ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್ & ಪಂಚಾಂಗ ಲೆಡ್ಜರ್
+          </h1>
+          <p class="text-[11px] sm:text-xs text-kesari-100 font-medium">
+            Veda Astrolight • Client Vault & Hora Wealth Analytics
+          </p>
+        </div>
+      </div>
+
+      <!-- GPS Badge & Global Actions -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" onclick="detectGPSLocation(true)" title="ಸ್ಥಳ ಮರುಪರಿಶೀಲಿಸಿ (Refresh GPS)"
+          class="px-2.5 py-1.5 rounded-xl bg-maroon-900/70 hover:bg-maroon-900 border border-gold-500/50 text-gold-400 text-[11px] sm:text-xs font-semibold flex items-center gap-1 transition">
+          <span id="gpsStatusText">📍 ಉಡುಪಿ (13.33° N, 74.75° E)</span>
+          <span class="text-[10px] opacity-80">↻</span>
+        </button>
+
+        <button type="button" id="headerLockBtn" onclick="lockApp()" title="ಆಪ್ ಲಾಕ್ ಮಾಡಿ"
+          class="hidden px-2.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-gold-400/40 text-xs font-semibold transition">
+          🔒
+        </button>
+
+        <button type="button" onclick="syncWithGoogleSheet(false)"
+          class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-gold-400/40 text-xs sm:text-sm font-semibold transition flex items-center gap-1">
+          🔄 <span>ಸಿಂಕ್ (Sync)</span>
+        </button>
+
+        <button type="button" onclick="openModal('settingsModal')"
+          class="px-3 py-1.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-maroon-900 text-xs sm:text-sm font-bold shadow transition flex items-center gap-1">
+          ⚙️ <span>ಸೆಟ್ಟಿಂಗ್ಸ್</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="bg-maroon-900/95 border-t border-gold-500/30 px-3 sm:px-5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+        <nav class="flex gap-1.5 sm:gap-2 pt-1.5">
+          <button type="button" id="tabBtnVault" onclick="switchMainTab('vault')"
+            class="px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-cream text-maroon-900 border-t-2 border-x border-gold-500 shadow-xs transition flex items-center gap-1.5">
+            👥 <span>ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್ (Client Vault)</span>
+          </button>
+          <button type="button" id="tabBtnAnalytics" onclick="switchMainTab('analytics')"
+            class="px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-maroon-800/60 text-kesari-100 hover:bg-maroon-800 transition flex items-center gap-1.5">
+            📊 <span>ಆದಾಯ & ಪಂಚಾಂಗ ವಿಶ್ಲೇಷಣೆ</span>
+          </button>
+        </nav>
+
+        <div id="statusStrip" class="text-[11px] text-kesari-200 py-1.5 hidden md:block">
+          ಸಿದ್ಧವಾಗಿದೆ • ಎಲ್ಲಾ ಮಾಹಿತಿ ಸುರಕ್ಷಿತವಾಗಿದೆ
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: CLIENT VAULT (Clean Client Profile + Searchable Directory)     -->
+  <!-- ===================================================================== -->
+  <main id="tabSectionVault" class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT: Clean Client Entry / Edit Form (5 Columns) -->
+    <section class="lg:col-span-5 bg-white rounded-2xl shadow-md border border-kesari-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-kesari-50 to-orange-50 px-5 py-3.5 border-b border-kesari-200 flex items-center justify-between">
+        <h2 id="formHeading" class="text-base font-bold text-maroon-900 flex items-center gap-2">
+          📝 ಹೊಸ ಕ್ಲೈಂಟ್ ವಿವರ ದಾಖಲಿಸಿ
+        </h2>
+        <button type="button" onclick="resetClientForm()"
+          class="px-3 py-1 rounded-lg bg-kesari-600 hover:bg-kesari-700 text-white text-xs font-semibold shadow-sm transition">
+          + ಹೊಸ ಕ್ಲೈಂಟ್
+        </button>
+      </div>
+
+      <form id="clientForm" onsubmit="handleSaveClient(event)" class="p-4 sm:p-5 space-y-4">
+        <input type="hidden" id="clientId" />
+
+        <!-- Client Name & Phone -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-maroon-800 mb-1">
+              ಹೆಸರು (Client Name) <span class="text-red-600">*</span>
+            </label>
+            <input type="text" id="clientName" required placeholder="ಉದಾ: ಶ್ರೀನಿವಾಸ ಭಟ್"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-cream focus:bg-white focus:border-kesari-600 focus:ring-2 focus:ring-kesari-200 focus:outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-maroon-800 mb-1">
+              ಮೊಬೈಲ್ ನಂಬರ್ (Phone Number) <span class="text-red-600">*</span>
+            </label>
+            <input type="tel" id="clientPhone" required placeholder="ಉದಾ: 9845012345"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-cream focus:bg-white focus:border-kesari-600 focus:ring-2 focus:ring-kesari-200 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <!-- Birth Details: Date (DD/MM/YYYY), Time (Hour, Min, AM/PM), Place -->
+        <div class="bg-kesari-50/70 p-3.5 rounded-xl border border-kesari-200 space-y-3">
+          <div class="text-xs font-bold text-kesari-800 flex items-center gap-1.5">
+            🎂 ಜನನ ವಿವರಗಳು (Birth Details)
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-700 mb-1">ಜನ್ಮ ದಿನಾಂಕ (DD/MM/YYYY)</label>
+              <input type="text" id="clientDob" maxlength="10" oninput="formatDateInput(this)" placeholder="23/09/1986"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-gray-700 mb-1">ಜನ್ಮ ಸಮಯ (Birth Time AM/PM)</label>
+              <div class="grid grid-cols-3 gap-1.5">
+                <select id="clientTobHour" aria-label="Hour"
+                  class="px-2 py-2 text-xs sm:text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none">
+                  <option value="">ಗಂಟೆ</option>
+                  <option value="01">01</option>
+                  <option value="02">02</option>
+                  <option value="03">03</option>
+                  <option value="04">04</option>
+                  <option value="05">05</option>
+                  <option value="06">06</option>
+                  <option value="07">07</option>
+                  <option value="08">08</option>
+                  <option value="09">09</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                </select>
+                <select id="clientTobMin" aria-label="Minute"
+                  class="px-2 py-2 text-xs sm:text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none">
+                  <option value="">ನಿಮಿಷ</option>
+                </select>
+                <select id="clientTobAmPm" aria-label="AM/PM"
+                  class="px-2 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none text-maroon-900">
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">ಜನ್ಮ ಸ್ಥಳ (Birth Place)</label>
+            <input type="text" id="clientPob" placeholder="ಉದಾ: ಕುಂದಾಪುರ / ಉಡುಪಿ / ಬೆಂಗಳೂರು"
+              class="w-full px-3 py-2 text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Consultation / Prediction Notes -->
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+            <label class="text-xs font-semibold text-maroon-800">
+              ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಭವಿಷ್ಯವಾಣಿ ನೋಟ್ಸ್ (Prediction Notes)
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="insertTimestamp()" title="ಸಮಾಲೋಚನೆ ದಿನಾಂಕ ಸೇರಿಸಿ"
+                class="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-[11px] font-semibold transition">
+                🕒 ದಿನಾಂಕ ಸೇರಿಸಿ
+              </button>
+              <button type="button" id="voiceBtn" onclick="toggleVoiceTyping()"
+                class="px-2.5 py-1 rounded-lg bg-kesari-100 hover:bg-kesari-200 text-kesari-900 border border-kesari-300 text-[11px] font-semibold transition flex items-center gap-1">
+                🎤 ಧ್ವನಿ ಟೈಪಿಂಗ್
+              </button>
+              <button type="button" onclick="clearNotesField()" title="ನೋಟ್ಸ್ ಅಳಿಸಿ"
+                class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-semibold transition">
+                🧹
+              </button>
+            </div>
+          </div>
+          <textarea id="clientNotes" rows="7"
+            placeholder="ಕ್ಲೈಂಟ್‌ಗೆ ಹೇಳಿದ ಭವಿಷ್ಯವಾಣಿ, ದಶಾ-ಭುಕ್ತಿ ಫಲ, ಪ್ರಶ್ನೆ ಅಥವಾ ಪರಿಹಾರಗಳ ವಿವರವನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ ಅಥವಾ ಕಾಪಿ-ಪೇಸ್ಟ್ ಮಾಡಿ..."
+            class="w-full px-3.5 py-2.5 text-sm leading-relaxed rounded-xl border border-kesari-300 bg-cream focus:bg-white focus:border-kesari-600 focus:ring-2 focus:ring-kesari-200 focus:outline-none transition"></textarea>
+        </div>
+
+        <!-- Save & Cancel Buttons -->
+        <div class="pt-1 space-y-2">
+          <button type="submit" id="saveSubmitBtn"
+            class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-kesari-600 to-maroon-800 hover:from-kesari-700 hover:to-maroon-900 text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition transform active:scale-[0.99]">
+            💾 ಕ್ಲೈಂಟ್ ವಿವರ ಸೇವ್ ಮಾಡಿ
+          </button>
+          <button type="button" id="cancelEditBtn" onclick="resetClientForm()"
+            class="hidden w-full py-2 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs transition">
+            ✕ ತಿದ್ದುಪಡಿ ರದ್ದುಮಾಡಿ (Cancel Edit)
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- RIGHT: Searchable Client Directory (7 Columns) -->
+    <section class="lg:col-span-7 bg-white rounded-2xl shadow-md border border-kesari-200 overflow-hidden flex flex-col">
+      <div class="bg-gradient-to-r from-kesari-50 to-orange-50 p-4 sm:p-5 border-b border-kesari-200 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-base font-bold text-maroon-900 flex items-center gap-2">
+            📂 ಉಳಿಸಿದ ಕ್ಲೈಂಟ್‌ಗಳ ಪಟ್ಟಿ (Client Directory)
+          </h2>
+          <div class="flex items-center gap-2">
+            <span id="totalClientsBadge" class="px-2.5 py-1 rounded-full bg-kesari-200 text-maroon-900 text-xs font-bold">
+              0 ಕ್ಲೈಂಟ್‌ಗಳು
+            </span>
+          </div>
+        </div>
+
+        <!-- Instant Search Bar -->
+        <div class="relative">
+          <span class="absolute inset-y-0 left-3.5 flex items-center text-kesari-600 text-base pointer-events-none">
+            🔍
+          </span>
+          <input type="text" id="searchInput" oninput="renderClientList()"
+            placeholder="ಹೆಸರು, ಮೊಬೈಲ್ ನಂಬರ್, ಜನ್ಮ ಸ್ಥಳ ಅಥವಾ ನೋಟ್ಸ್ ಹುಡುಕಿ..."
+            class="w-full pl-10 pr-9 py-2.5 text-sm rounded-xl border-2 border-kesari-400 bg-white focus:border-kesari-600 focus:ring-2 focus:ring-kesari-200 focus:outline-none shadow-sm font-medium" />
+          <button type="button" id="clearSearchBtn" onclick="clearSearch()"
+            class="hidden absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-700 text-sm font-bold">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Client Cards Container -->
+      <div id="clientListContainer" class="p-4 sm:p-5 space-y-3.5 max-h-[750px] overflow-y-auto">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: INCOME & PANCHANGA WEALTH ANALYTICS                            -->
+  <!-- ===================================================================== -->
+  <main id="tabSectionAnalytics" class="hidden flex-1 max-w-7xl w-full mx-auto px-3 sm:px-5 py-5 space-y-6">
+
+    <!-- Date Range Filter Card -->
+    <section class="bg-white rounded-2xl shadow-md border border-kesari-200 p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-maroon-900 flex items-center gap-2">
+            📊 ಆದಾಯ ಮತ್ತು ಧನದಾಯಕ ಕಾಲ ವಿಶ್ಲೇಷಣೆ (Income & Panchanga Wealth Analytics)
+          </h2>
+          <p class="text-xs text-gray-600">
+            ನಿರ್ದಿಷ್ಟ ಅವಧಿಯ ಒಟ್ಟು ಆದಾಯ ಮತ್ತು ನಿಮಗೆ ಅತಿ ಹೆಚ್ಚು ಧನ ತಂದ ಲಗ್ನ, ಹೋರೆ, ನಕ್ಷತ್ರ, ತಿಥಿ, ವಾರ, ಯೋಗ, ಕರಣಗಳ ಶ್ರೇಯಾಂಕ
+          </p>
+        </div>
+
+        <!-- Quick Preset Pills -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" id="presetThisMonth" onclick="applyDatePreset('thisMonth', false)"
+            class="preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-600 text-white shadow-xs transition">
+            ಈ ತಿಂಗಳು (This Month)
+          </button>
+          <button type="button" id="presetLastMonth" onclick="applyDatePreset('lastMonth', false)"
+            class="preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-50 text-maroon-900 border border-kesari-200 hover:bg-kesari-100 transition">
+            ಕಳೆದ ತಿಂಗಳು (Last Month)
+          </button>
+          <button type="button" id="presetAllTime" onclick="applyDatePreset('allTime', false)"
+            class="preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-50 text-maroon-900 border border-kesari-200 hover:bg-kesari-100 transition">
+            ಎಲ್ಲಾ ಕಾಲ (All Time)
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom From / To Date Inputs (DD/MM/YYYY) -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end bg-kesari-50/70 p-3.5 rounded-xl border border-kesari-200">
+        <div>
+          <label class="block text-xs font-semibold text-maroon-900 mb-1">ಪ್ರಾರಂಭ ದಿನಾಂಕ (From DD/MM/YYYY)</label>
+          <input type="text" id="filterFromDate" maxlength="10" oninput="formatDateInput(this)" placeholder="01/11/2026"
+            class="w-full px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-maroon-900 mb-1">ಅಂತಿಮ ದಿನಾಂಕ (To DD/MM/YYYY)</label>
+          <input type="text" id="filterToDate" maxlength="10" oninput="formatDateInput(this)" placeholder="30/11/2026"
+            class="w-full px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="applyCustomDateRange()"
+            class="flex-1 py-2 px-4 rounded-xl bg-gradient-to-r from-kesari-600 to-maroon-800 text-white text-xs sm:text-sm font-bold shadow hover:opacity-95 transition">
+            🔍 ಪರಿಶೀಲಿಸಿ (Filter)
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 Summary KPI Cards -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div class="bg-gradient-to-br from-maroon-900 to-kesari-800 text-white rounded-2xl p-4 shadow-md border border-gold-500">
+        <div class="text-xs text-kesari-200 font-medium">ಒಟ್ಟು ಆದಾಯ (Total Income)</div>
+        <div id="kpiTotalIncome" class="text-xl sm:text-2xl font-bold text-gold-400 mt-1">₹0</div>
+        <div id="kpiDateLabel" class="text-[10px] text-kesari-200 mt-1">ಈ ತಿಂಗಳು</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-kesari-200">
+        <div class="text-xs text-gray-600 font-semibold">ಒಟ್ಟು ಪೇಮೆಂಟ್‌ಗಳು</div>
+        <div id="kpiTotalCount" class="text-xl sm:text-2xl font-bold text-maroon-900 mt-1">0</div>
+        <div class="text-[10px] text-kesari-700 mt-1">ಸಮಾಲೋಚನೆ ಸಂಖ್ಯೆ</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200">
+        <div class="text-xs text-emerald-800 font-semibold">📱 UPI ಮೊತ್ತ</div>
+        <div id="kpiUpiTotal" class="text-xl sm:text-2xl font-bold text-emerald-700 mt-1">₹0</div>
+        <div id="kpiUpiCount" class="text-[10px] text-gray-500 mt-1">0 ಪೇಮೆಂಟ್‌ಗಳು</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-amber-200">
+        <div class="text-xs text-amber-800 font-semibold">💵 Cash (ನಗದು)</div>
+        <div id="kpiCashTotal" class="text-xl sm:text-2xl font-bold text-amber-700 mt-1">₹0</div>
+        <div id="kpiCashCount" class="text-[10px] text-gray-500 mt-1">0 ಪೇಮೆಂಟ್‌ಗಳು</div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-blue-200 col-span-2 sm:col-span-1">
+        <div class="text-xs text-blue-800 font-semibold">🏦 Bank Transfer</div>
+        <div id="kpiBankTotal" class="text-xl sm:text-2xl font-bold text-blue-700 mt-1">₹0</div>
+        <div id="kpiBankCount" class="text-[10px] text-gray-500 mt-1">0 ಪೇಮೆಂಟ್‌ಗಳು</div>
+      </div>
+    </section>
+
+    <!-- Best Wealth Timing Rankings (7 Panchanga & Hora Dimensions) -->
+    <section class="bg-white rounded-2xl shadow-md border border-kesari-200 p-4 sm:p-5 space-y-4">
+      <div class="border-b border-kesari-200 pb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="text-base font-bold text-maroon-900 flex items-center gap-2">
+            🏆 ನಿಮಗೆ ಅತಿ ಹೆಚ್ಚು ಧನ ತಂದ ಕಾಲಾಂಶಗಳ ಶ್ರೇಯಾಂಕ (Best Wealth Timing Discovery)
+          </h3>
+          <p class="text-xs text-gray-600">
+            ಆಯ್ಕೆ ಮಾಡಿದ ಅವಧಿಯಲ್ಲಿ ಯಾವ ಲಗ್ನ, ಹೋರೆ, ನಕ್ಷತ್ರ, ತಿಥಿ, ವಾರ, ಯೋಗ ಮತ್ತು ಕರಣದಲ್ಲಿ ಅತಿ ಹೆಚ್ಚು ಹಣ ಬಂದಿದೆ ಎಂಬ ವಿವರ
+          </p>
+        </div>
+      </div>
+
+      <div id="wealthRankingsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- 7 Ranking Cards populated dynamically -->
+      </div>
+    </section>
+
+    <!-- Chronological Payment & Panchanga Ledger Table -->
+    <section class="bg-white rounded-2xl shadow-md border border-kesari-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-kesari-50 to-orange-50 px-5 py-3.5 border-b border-kesari-200 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-bold text-maroon-900">
+          📜 ಪೇಮೆಂಟ್ ಮತ್ತು ತತ್ಕಾಲ ಪಂಚಾಂಗ ದಾಖಲೆ ಪಟ್ಟಿ (Payment & Panchanga Ledger)
+        </h3>
+        <span id="ledgerRowCount" class="px-2.5 py-0.5 rounded-full bg-kesari-200 text-maroon-900 text-xs font-bold">
+          0 ದಾಖಲೆಗಳು
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-maroon-900 text-white whitespace-nowrap">
+              <th class="py-3 px-3 font-semibold">ದಿನಾಂಕ & ಸಮಯ</th>
+              <th class="py-3 px-3 font-semibold">ಕ್ಲೈಂಟ್ ಹೆಸರು</th>
+              <th class="py-3 px-3 font-semibold">ಮೊತ್ತ (₹)</th>
+              <th class="py-3 px-3 font-semibold">ವಿಧಾನ</th>
+              <th class="py-3 px-3 font-semibold text-gold-400">ತತ್ಕಾಲ ಲಗ್ನ</th>
+              <th class="py-3 px-3 font-semibold text-gold-400">ಗ್ರಹ ಹೋರೆ</th>
+              <th class="py-3 px-3 font-semibold">ತಿಥಿ</th>
+              <th class="py-3 px-3 font-semibold">ವಾರ</th>
+              <th class="py-3 px-3 font-semibold">ನಕ್ಷತ್ರ</th>
+              <th class="py-3 px-3 font-semibold">ಯೋಗ</th>
+              <th class="py-3 px-3 font-semibold">ಕರಣ</th>
+              <th class="py-3 px-3 font-semibold">ಸ್ಥಳ</th>
+              <th class="py-3 px-3 font-semibold text-center">ಕ್ರಿಯೆ</th>
+            </tr>
+          </thead>
+          <tbody id="paymentLedgerTbody" class="divide-y divide-kesari-100">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: ADD PAYMENT MODAL (+ ₹ ಪೇಮೆಂಟ್ ಸೇರಿಸಿ with Live Panchanga)  -->
+  <!-- ===================================================================== -->
+  <div id="paymentModal" class="fixed inset-0 z-40 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl border-2 border-kesari-600 shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="bg-gradient-to-r from-maroon-900 to-kesari-700 text-white px-5 py-3.5 flex items-center justify-between">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold">💰 ಪೇಮೆಂಟ್ ಸೇರಿಸಿ (+ Add Payment)</h3>
+          <p id="payModalClientSubtitle" class="text-xs text-gold-400 font-semibold"></p>
+        </div>
+        <button type="button" onclick="closeModal('paymentModal')" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white font-bold">
+          ✕
+        </button>
+      </div>
+
+      <form id="paymentForm" onsubmit="handleSavePayment(event)" class="p-4 sm:p-5 overflow-y-auto space-y-4">
+        <input type="hidden" id="payClientId" />
+
+        <!-- Amount & Mode -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-maroon-900 mb-1">
+              ದಕ್ಷಿಣೆ / ಶುಲ್ಕ ಮೊತ್ತ (Amount ₹) <span class="text-red-600">*</span>
+            </label>
+            <input type="number" id="payAmount" required min="1" step="any" placeholder="ಉದಾ: 500 ಅಥವಾ 1001"
+              class="w-full px-3.5 py-2.5 text-base font-bold rounded-xl border-2 border-kesari-400 bg-cream focus:bg-white focus:border-kesari-600 focus:outline-none text-maroon-900" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-maroon-900 mb-1">ಪೇಮೆಂಟ್ ವಿಧಾನ (Mode)</label>
+            <select id="payMode"
+              class="w-full px-3 py-2.5 text-sm font-semibold rounded-xl border border-kesari-300 bg-cream focus:bg-white focus:border-kesari-600 focus:outline-none">
+              <option value="UPI">📱 UPI (GPay / PhonePe)</option>
+              <option value="Cash">💵 Cash (ನಗದು)</option>
+              <option value="Bank Transfer">🏦 Bank Transfer</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Payment Date & Time -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">ಪೇಮೆಂಟ್ ದಿನಾಂಕ (DD/MM/YYYY)</label>
+            <input type="text" id="payDate" required maxlength="10"
+              oninput="formatDateInput(this); refreshPaymentPanchangaPreview();"
+              class="w-full px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">ಪೇಮೆಂಟ್ ಸಮಯ (AM/PM)</label>
+            <div class="grid grid-cols-3 gap-1">
+              <select id="payHour" onchange="refreshPaymentPanchangaPreview()"
+                class="px-2 py-2 text-xs sm:text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none">
+                <option value="01">01</option>
+                <option value="02">02</option>
+                <option value="03">03</option>
+                <option value="04">04</option>
+                <option value="05">05</option>
+                <option value="06">06</option>
+                <option value="07">07</option>
+                <option value="08">08</option>
+                <option value="09">09</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+              </select>
+              <select id="payMin" onchange="refreshPaymentPanchangaPreview()"
+                class="px-2 py-2 text-xs sm:text-sm rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none">
+              </select>
+              <select id="payAmPm" onchange="refreshPaymentPanchangaPreview()"
+                class="px-2 py-2 text-xs sm:text-sm font-bold rounded-lg border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none text-maroon-900">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Auto-Calculated Tatkalika Panchanga & Hora Preview Card -->
+        <div class="bg-gradient-to-br from-kesari-50 to-amber-50 p-3.5 rounded-xl border border-gold-500 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-maroon-900 flex items-center gap-1">
+              🪐 ಆಟೋ-ಪಂಚಾಂಗ & ಹೋರೆ (ಚಿತ್ರಪಕ್ಷ/ಲಹಿರಿ)
+            </span>
+            <span id="payModalLocationTag" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white border border-kesari-300 text-kesari-800">
+              📍 ಉಡುಪಿ
+            </span>
+          </div>
+
+          <div id="livePanchangaGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="pt-1 flex gap-2.5">
+          <button type="button" onclick="closeModal('paymentModal')"
+            class="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs sm:text-sm font-bold">
+            ರದ್ದುಮಾಡಿ
+          </button>
+          <button type="submit"
+            class="flex-[2] py-2.5 px-4 rounded-xl bg-gradient-to-r from-kesari-600 to-maroon-800 hover:from-kesari-700 hover:to-maroon-900 text-white text-xs sm:text-sm font-bold shadow-md">
+            💾 ಪೇಮೆಂಟ್ & ಪಂಚಾಂಗ ಸೇವ್ ಮಾಡಿ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: CLIENT DETAIL VIEW & PAYMENT HISTORY MODAL                   -->
+  <!-- ===================================================================== -->
+  <div id="viewModal" class="fixed inset-0 z-40 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl border-2 border-kesari-600 shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="bg-gradient-to-r from-maroon-900 to-kesari-700 text-white px-5 py-3.5 flex items-center justify-between">
+        <div>
+          <h3 id="viewModalTitle" class="text-lg font-bold">ಕ್ಲೈಂಟ್ ವಿವರ</h3>
+          <p id="viewModalSubtitle" class="text-xs text-kesari-100"></p>
+        </div>
+        <button type="button" onclick="closeModal('viewModal')" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white font-bold">
+          ✕
+        </button>
+      </div>
+
+      <div id="viewModalBody" class="p-4 sm:p-5 overflow-y-auto space-y-4 text-sm">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div id="viewModalFooter" class="bg-kesari-50 px-5 py-3 border-t border-kesari-200 flex flex-wrap items-center justify-end gap-2">
+        <!-- Action buttons populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: DELETE CONFIRMATION MODAL                                    -->
+  <!-- ===================================================================== -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border-2 border-red-400 shadow-2xl max-w-sm w-full p-5 text-center">
+      <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl">
+        🗑️
+      </div>
+      <h3 id="deleteModalHeading" class="text-base font-bold text-gray-900 mb-1">ದಾಖಲೆಯನ್ನು ಅಳಿಸಬೇಕೇ?</h3>
+      <p id="deleteModalText" class="text-xs text-gray-600 mb-5">ಈ ಮಾಹಿತಿಯು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿಹೋಗುತ್ತದೆ.</p>
+      <div class="flex gap-2.5">
+        <button type="button" onclick="closeModal('deleteModal')" class="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold">
+          ರದ್ದುಮಾಡಿ
+        </button>
+        <button type="button" id="confirmDeleteBtn" class="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow">
+          ಹೌದು, ಅಳಿಸಿ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: SETTINGS, GOOGLE SHEETS SYNC, PIN & BACKUP                   -->
+  <!-- ===================================================================== -->
+  <div id="settingsModal" class="fixed inset-0 z-40 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl border-2 border-kesari-600 shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="bg-gradient-to-r from-maroon-900 to-kesari-700 text-white px-5 py-3.5 flex items-center justify-between">
+        <h3 class="text-base sm:text-lg font-bold">⚙️ ಸೆಟ್ಟಿಂಗ್ಸ್ • Google Sheet ಸಿಂಕ್ & ಸುರಕ್ಷತೆ</h3>
+        <button type="button" onclick="closeModal('settingsModal')" class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 flex items-center justify-center text-white font-bold">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-5 text-sm">
+        <!-- 1. Google Sheets Sync URL -->
+        <div class="bg-amber-50/80 p-4 rounded-xl border border-amber-300 space-y-3">
+          <h4 class="font-bold text-maroon-900 flex items-center gap-1.5">
+            ☁️ Google Sheet ಲಿಂಕ್ (Clients & Payments Cloud Sync)
+          </h4>
+          <p class="text-xs text-gray-700 leading-relaxed">
+            ನಿಮ್ಮ <b>Veda_Astrolight_Client_Vault</b> Google Sheet ನ <b>Apps Script Web App URL</b> (<code>.../exec</code>) ಅನ್ನು ಇಲ್ಲಿ ಪೇಸ್ಟ್ ಮಾಡಿ ಸೇವ್ ಮಾಡಿ:
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="url" id="settingsSheetUrl" placeholder="https://script.google.com/macros/s/.../exec"
+              class="flex-1 px-3 py-2 text-xs rounded-xl border border-amber-400 bg-white focus:border-kesari-600 focus:outline-none" />
+            <button type="button" onclick="saveSheetUrlSetting()"
+              class="px-4 py-2 rounded-xl bg-maroon-800 hover:bg-maroon-900 text-white text-xs font-bold shrink-0">
+              URL ಸೇವ್ & ಸಿಂಕ್
+            </button>
+          </div>
+
+          <!-- Two-Tab Apps Script Code Helper -->
+          <details class="bg-white rounded-xl border border-amber-200 p-3">
+            <summary class="text-xs font-bold text-kesari-800 cursor-pointer select-none">
+              📋 Google Sheet ಜೋಡಣೆ ಹಂತಗಳು & Apps Script ಕೋಡ್ ಕಾಪಿ ಮಾಡಿ
+            </summary>
+            <div class="mt-2.5 space-y-2 text-xs text-gray-700">
+              <ol class="list-decimal list-inside space-y-1 text-[11px]">
+                <li>ನಿಮ್ಮ Google Sheet ನಲ್ಲಿ <b>Extensions &gt; Apps Script</b> ತೆರೆಯಿರಿ.</li>
+                <li>ಕೆಳಗಿನ ಕೋಡ್ ಕಾಪಿ ಮಾಡಿ ಅಲ್ಲಿ ಪೇಸ್ಟ್ ಮಾಡಿ ಸೇವ್ ಮಾಡಿ.</li>
+                <li><b>Deploy &gt; New deployment &gt; Web app</b> ಆಯ್ಕೆ ಮಾಡಿ, <b>Who has access: Anyone</b> ಇಟ್ಟು Deploy ಒತ್ತಿ ಸಿಗುವ <code>/exec</code> ಲಿಂಕ್ ಇಲ್ಲಿ ಹಾಕಿ.</li>
+              </ol>
+              <textarea id="appsScriptTemplate" readonly rows="8"
+                class="w-full bg-gray-900 text-green-300 p-3 rounded-lg text-[11px] font-mono focus:outline-none">function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const readSheet = (name) => {
+    const sh = ss.getSheetByName(name);
+    if (!sh) return [];
+    const data = sh.getDataRange().getValues();
+    if (data.length <= 1) return [];
+    const headers = data[0];
+    return data.slice(1).map(r => {
+      let obj = {};
+      headers.forEach((h, i) => obj[h] = r[i]);
+      return obj;
+    });
+  };
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "success",
+    clients: readSheet("Clients"),
+    payments: readSheet("Payments")
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const p = JSON.parse(e.postData.contents);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const upsert = (sheetName, headers, idVal, rowArr) => {
+    let sh = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+    if (sh.getLastRow() === 0) sh.appendRow(headers);
+    const data = sh.getDataRange().getValues();
+    let idx = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(idVal)) { idx = i + 1; break; }
+    }
+    if (idx > 0) sh.getRange(idx, 1, 1, rowArr.length).setValues([rowArr]);
+    else sh.appendRow(rowArr);
+  };
+  const delRow = (sheetName, idVal) => {
+    const sh = ss.getSheetByName(sheetName);
+    if (!sh) return;
+    const data = sh.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(idVal)) { sh.deleteRow(i + 1); break; }
+    }
+  };
+  if (p.action === "saveClient") {
+    const c = p.client;
+    upsert("Clients", ["ID","Name","Phone","DOB","TOB","POB","Notes","CreatedDate","UpdatedDate"],
+      c.ID, [c.ID, c.Name, "'"+c.Phone, c.DOB, c.TOB, c.POB, c.Notes, c.CreatedDate, c.UpdatedDate]);
+  } else if (p.action === "deleteClient") {
+    delRow("Clients", p.ID);
+  } else if (p.action === "savePayment") {
+    const m = p.payment;
+    upsert("Payments", ["PaymentID","ClientID","ClientName","Amount","PaymentMode","PaymentDate","PaymentTime","Location","Lagna","Hora","Tithi","Vara","Nakshatra","Yoga","Karana"],
+      m.PaymentID, [m.PaymentID, m.ClientID, m.ClientName, m.Amount, m.PaymentMode, m.PaymentDate, m.PaymentTime, m.Location, m.Lagna, m.Hora, m.Tithi, m.Vara, m.Nakshatra, m.Yoga, m.Karana]);
+  } else if (p.action === "deletePayment") {
+    delRow("Payments", p.PaymentID);
+  } else if (p.action === "syncAll") {
+    (p.clients || []).forEach(c => upsert("Clients", ["ID","Name","Phone","DOB","TOB","POB","Notes","CreatedDate","UpdatedDate"],
+      c.ID, [c.ID, c.Name, "'"+c.Phone, c.DOB, c.TOB, c.POB, c.Notes, c.CreatedDate, c.UpdatedDate]));
+    (p.payments || []).forEach(m => upsert("Payments", ["PaymentID","ClientID","ClientName","Amount","PaymentMode","PaymentDate","PaymentTime","Location","Lagna","Hora","Tithi","Vara","Nakshatra","Yoga","Karana"],
+      m.PaymentID, [m.PaymentID, m.ClientID, m.ClientName, m.Amount, m.PaymentMode, m.PaymentDate, m.PaymentTime, m.Location, m.Lagna, m.Hora, m.Tithi, m.Vara, m.Nakshatra, m.Yoga, m.Karana]));
+  }
+  return ContentService.createTextOutput(JSON.stringify({status:"success"})).setMimeType(ContentService.MimeType.JSON);
+}</textarea>
+              <button type="button" onclick="copyAppsScriptCode()" class="mt-1 px-3 py-1.5 rounded-lg bg-kesari-600 text-white text-xs font-semibold">
+                📋 ಸ್ಕ್ರಿಪ್ಟ್ ಕೋಡ್ ಕಾಪಿ ಮಾಡಿ
+              </button>
+            </div>
+          </details>
+        </div>
+
+        <!-- 2. 4-Digit Security PIN -->
+        <div class="bg-kesari-50 p-4 rounded-xl border border-kesari-200 space-y-2.5">
+          <h4 class="font-bold text-maroon-900 flex items-center gap-1.5">
+            🔒 4-ಅಂಕಿಯ ಸುರಕ್ಷತಾ PIN ಲಾಕ್ (Privacy Lock)
+          </h4>
+          <p class="text-xs text-gray-600">
+            ಕ್ಲೈಂಟ್ ವಿವರ ಮತ್ತು ಆದಾಯದ ಲೆಕ್ಕ ಗೌಪ್ಯವಾಗಿಡಲು 4-ಅಂಕಿಯ PIN ಹೊಂದಿಸಬಹುದು.
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="password" id="settingsPinInput" maxlength="4" inputmode="numeric" placeholder="ಹೊಸ 4-ಅಂಕಿಯ PIN"
+              class="w-44 px-3 py-2 text-sm rounded-xl border border-kesari-300 bg-white focus:border-kesari-600 focus:outline-none" />
+            <button type="button" onclick="savePinSetting()" class="px-4 py-2 rounded-xl bg-kesari-600 hover:bg-kesari-700 text-white text-xs font-bold shadow-sm">
+              PIN ಸೇವ್ ಮಾಡಿ
+            </button>
+            <button type="button" onclick="removePinSetting()" class="px-3 py-2 rounded-xl bg-white hover:bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">
+              PIN ತೆಗೆದುಹಾಕಿ
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. JSON Backup, Restore & Sample Data Clear -->
+        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2.5">
+          <h4 class="font-bold text-gray-800 flex items-center gap-1.5">
+            💾 ಫೈಲ್ ಬ್ಯಾಕಪ್ ಮತ್ತು ಡೇಟಾ ನಿರ್ವಹಣೆ (Backup & Data)
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+            <button type="button" onclick="exportBackupJSON()"
+              class="py-2.5 px-3 rounded-xl bg-white hover:bg-kesari-50 text-maroon-900 border border-kesari-300 text-xs font-bold transition">
+              ⬇️ JSON ಬ್ಯಾಕಪ್
+            </button>
+            <button type="button" onclick="document.getElementById('jsonImportInput').click()"
+              class="py-2.5 px-3 rounded-xl bg-white hover:bg-kesari-50 text-maroon-900 border border-kesari-300 text-xs font-bold transition">
+              ⬆️ JSON ರಿಸ್ಟೋರ್
+            </button>
+            <button type="button" onclick="clearSampleRecords()"
+              class="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 text-xs font-bold transition">
+              🧹 ಸ್ಯಾಂಪಲ್ ಡೇಟಾ ಅಳಿಸಿ
+            </button>
+            <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importBackupJSON(event)" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden textarea for safe clipboard fallback -->
+  <textarea id="clipboardFallback" class="fixed -left-[9999px] top-0 opacity-0" aria-hidden="true"></textarea>
+
+  <script>
+    // =========================================================================
+    // STORAGE KEYS & APPLICATION STATE
+    // =========================================================================
+    const KEY_CLIENTS = 'veda_vault_clients_v2';
+    const KEY_PAYMENTS = 'veda_vault_payments_v2';
+    const KEY_INIT_FLAG = 'veda_vault_initialized_v2';
+    const KEY_SHEET_URL = 'veda_vault_sheet_url_v2';
+    const KEY_PIN = 'veda_vault_pin_v2';
+
+    const UDUPI_DEFAULT = {
+      lat: 13.3347,
+      lon: 74.7462,
+      label: 'ಉಡುಪಿ (13.33° N, 74.75° E)',
+      isGps: false
+    };
+
+    let currentGeo = { ...UDUPI_DEFAULT };
+    let clients = [];
+    let payments = [];
+    let sheetUrl = localStorage.getItem(KEY_SHEET_URL) || '';
+    let savedPin = localStorage.getItem(KEY_PIN) || '';
+
+    // =========================================================================
+    // ASTRONOMICAL CHITRAPAKSHA (LAHIRI) PANCHANGA & HORA ENGINE
+    // =========================================================================
+    const RASHI_NAMES = [
+      'ಮೇಷ (Mesha)', 'ವೃಷಭ (Vrishabha)', 'ಮಿಥುನ (Mithuna)', 'ಕರ್ಕಾಟಕ (Karkataka)',
+      'ಸಿಂಹ (Simha)', 'ಕನ್ಯಾ (Kanya)', 'ತುಲಾ (Tula)', 'ವೃಶ್ಚಿಕ (Vrishchika)',
+      'ಧನು (Dhanu)', 'ಮಕರ (Makara)', 'ಕುಂಭ (Kumbha)', 'ಮೀನ (Meena)'
+    ];
+
+    const NAKSHATRA_NAMES = [
+      'ಅಶ್ವಿನಿ', 'ಭರಣಿ', 'ಕೃತ್ತಿಕಾ', 'ರೋಹಿಣಿ', 'ಮೃಗಶಿರಾ', 'ಆರ್ದ್ರಾ',
+      'ಪುನರ್ವಸು', 'ಪುಷ್ಯ', 'ಆಶ್ಲೇಷಾ', 'ಮಘಾ', 'ಪೂರ್ವ ಫಲ್ಗುಣಿ', 'ಉತ್ತರ ಫಲ್ಗುಣಿ',
+      'ಹಸ್ತ', 'ಚಿತ್ತಾ', 'ಸ್ವಾತಿ', 'ವಿಶಾಖಾ', 'ಅನುರಾಧಾ', 'ಜ್ಯೇಷ್ಠಾ',
+      'ಮೂಲಾ', 'ಪೂರ್ವಾಷಾಢಾ', 'ಉತ್ತರಾಷಾಢಾ', 'ಶ್ರವಣ', 'ಧನಿಷ್ಠಾ', 'ಶತಭಿಷಾ',
+      'ಪೂರ್ವಾಭಾದ್ರ', 'ಉತ್ತರಾಭಾದ್ರ', 'ರೇವತಿ'
+    ];
+
+    const YOGA_NAMES = [
+      'ವಿಷ್ಕಂಭ', 'ಪ್ರೀತಿ', 'ಆಯುಷ್ಮಾನ್', 'ಸೌಭಾಗ್ಯ', 'ಶೋಭನ', 'ಅತಿಗಂಡ',
+      'ಸುಕರ್ಮ', 'ಧೃತಿ', 'ಶೂಲ', 'ಗಂಡ', 'ವೃದ್ಧಿ', 'ಧ್ರುವ',
+      'ವ್ಯಾಘಾತ', 'ಹರ್ಷಣ', 'ವಜ್ರ', 'ಸಿದ್ಧಿ', 'ವ್ಯತೀಪಾತ', 'ವರೀಯಾನ್',
+      'ಪರಿಘ', 'ಶಿವ', 'ಸಿದ್ಧ', 'ಸಾಧ್ಯ', 'ಶುಭ', 'ಶುಕ್ಲ',
+      'ಬ್ರಹ್ಮ', 'ಐಂದ್ರ', 'ವೈಧೃತಿ'
+    ];
+
+    const VARA_NAMES = [
+      'ಭಾನುವಾರ (ರವಿ)', 'ಸೋಮವಾರ (ಚಂದ್ರ)', 'ಮಂಗಳವಾರ (ಕುಜ)',
+      'ಬುಧವಾರ (ಬುಧ)', 'ಗುರುವಾರ (ಗುರು)', 'ಶುಕ್ರವಾರ (ಶುಕ್ರ)', 'ಶನಿವಾರ (ಶನಿ)'
+    ];
+
+    const CHALDEAN_HORA_LORDS = [
+      'ರವಿ ಹೋರೆ (Surya)',
+      'ಶುಕ್ರ ಹೋರೆ (Shukra)',
+      'ಬುಧ ಹೋರೆ (Budha)',
+      'ಚಂದ್ರ ಹೋರೆ (Chandra)',
+      'ಶನಿ ಹೋರೆ (Shani)',
+      'ಗುರು ಹೋರೆ (Guru)',
+      'ಕುಜ ಹೋರೆ (Kuja)'
+    ];
+    const WEEKDAY_HORA_START = [0, 3, 6, 2, 5, 1, 4];
+
+    const TITHI_NAMES = [
+      'ಪ್ರತಿಪದ', 'ದ್ವಿತೀಯಾ', 'ತೃತೀಯಾ', 'ಚತುರ್ಥಿ', 'ಪಂಚಮಿ',
+      'ಷಷ್ಠಿ', 'ಸಪ್ತಮಿ', 'ಅಷ್ಟಮಿ', 'ನವಮಿ', 'ದಶಮಿ',
+      'ಏಕಾದಶಿ', 'ದ್ವಾದಶಿ', 'ತ್ರಯೋದಶಿ', 'ಚತುರ್ದಶಿ'
+    ];
+
+    function norm360(deg) {
+      let d = deg % 360;
+      return d < 0 ? d + 360 : d;
+    }
+
+    function deg2rad(d) { return (d * Math.PI) / 180; }
+    function rad2deg(r) { return (r * 180) / Math.PI; }
+
+    function getJulianDay(dateObj) {
+      return dateObj.getTime() / 86400000 + 2440587.5;
+    }
+
+    function getLahiriAyanamsa(jd) {
+      const T = (jd - 2451545.0) / 36525.0;
+      return 23.853056 + 1.396971 * T;
+    }
+
+    function getTropicalSunLon(jd) {
+      const n = jd - 2451545.0;
+      const L = norm360(280.460 + 0.9856474 * n);
+      const g = deg2rad(norm360(357.528 + 0.9856003 * n));
+      return norm360(L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g));
+    }
+
+    function getTropicalMoonLon(jd) {
+      const T = (jd - 2451545.0) / 36525.0;
+      const Lp = norm360(218.3164477 + 481267.88123421 * T);
+      const D = deg2rad(norm360(297.8501921 + 445267.1114034 * T));
+      const M = deg2rad(norm360(357.5291092 + 35999.0502909 * T));
+      const Mp = deg2rad(norm360(134.9633964 + 477198.8675055 * T));
+      const F = deg2rad(norm360(93.2720950 + 483202.0175233 * T));
+
+      const lon = Lp
+        + 6.288774 * Math.sin(Mp)
+        + 1.274027 * Math.sin(2 * D - Mp)
+        + 0.658314 * Math.sin(2 * D)
+        + 0.213618 * Math.sin(2 * Mp)
+        - 0.185116 * Math.sin(M)
+        - 0.114332 * Math.sin(2 * F)
+        + 0.058793 * Math.sin(2 * D - 2 * Mp)
+        + 0.057066 * Math.sin(2 * D - M - Mp)
+        + 0.053322 * Math.sin(2 * D + Mp)
+        + 0.045758 * Math.sin(2 * D - M);
+
+      return norm360(lon);
+    }
+
+    function getSiderealLagna(jd, latDeg, lonDeg, ayanamsa) {
+      const T = (jd - 2451545.0) / 36525.0;
+      const gmst = norm360(280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T);
+      const lst = norm360(gmst + lonDeg);
+      const ramc = deg2rad(lst);
+      const eps = deg2rad(23.439291 - 0.0130042 * T);
+      const phi = deg2rad(latDeg);
+
+      const y = -Math.cos(ramc);
+      const x = Math.sin(ramc) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps);
+      const tropAsc = norm360(rad2deg(Math.atan2(y, x)));
+
+      const sidAsc = norm360(tropAsc - ayanamsa);
+      const rashiIndex = Math.floor(sidAsc / 30);
+      return RASHI_NAMES[rashiIndex];
+    }
+
+    function getLocalSunriseSunsetIST(year, month, day, latDeg, lonDeg) {
+      const start = new Date(Date.UTC(year, 0, 0));
+      const curr = new Date(Date.UTC(year, month - 1, day));
+      const N = Math.floor((curr - start) / 86400000);
+
+      const lngHour = lonDeg / 15.0;
+      const calcEvent = (isSunrise) => {
+        const t = N + ((isSunrise ? 6 : 18) - lngHour) / 24.0;
+        const M = (0.9856 * t) - 3.289;
+        const L = norm360(M + (1.916 * Math.sin(deg2rad(M))) + (0.020 * Math.sin(deg2rad(2 * M))) + 282.634);
+        let RA = norm360(rad2deg(Math.atan(0.91764 * Math.tan(deg2rad(L)))));
+        const Lquadrant = Math.floor(L / 90) * 90;
+        const RAquadrant = Math.floor(RA / 90) * 90;
+        RA = (RA + (Lquadrant - RAquadrant)) / 15.0;
+
+        const sinDec = 0.39782 * Math.sin(deg2rad(L));
+        const cosDec = Math.cos(Math.asin(sinDec));
+        const cosH = (Math.cos(deg2rad(90.833)) - (sinDec * Math.sin(deg2rad(latDeg)))) / (cosDec * Math.cos(deg2rad(latDeg)));
+        if (cosH > 1 || cosH < -1) return isSunrise ? 360 : 1080;
+
+        let H = isSunrise ? (360 - rad2deg(Math.acos(cosH))) : rad2deg(Math.acos(cosH));
+        H = H / 15.0;
+        const T = H + RA - (0.06571 * t) - 6.622;
+        let UT = (T - lngHour) % 24;
+        if (UT < 0) UT += 24;
+        const istHours = (UT + 5.5) % 24;
+        return istHours * 60;
+      };
+
+      return {
+        sunriseMin: calcEvent(true),
+        sunsetMin: calcEvent(false)
+      };
+    }
+
+    function calculatePanchangaAndHora(dateStr, hour12, minVal, ampm, geo) {
+      const parts = (dateStr || '').split('/');
+      let day = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10);
+      let year = parseInt(parts[2], 10);
+
+      if (!day || !month || !year || year < 1900) {
+        const now = new Date();
+        day = now.getDate();
+        month = now.getMonth() + 1;
+        year = now.getFullYear();
+      }
+
+      let h24 = parseInt(hour12, 10) || 12;
+      const m = parseInt(minVal, 10) || 0;
+      if (ampm === 'PM' && h24 !== 12) h24 += 12;
+      if (ampm === 'AM' && h24 === 12) h24 = 0;
+
+      const utcMs = Date.UTC(year, month - 1, day, h24, m, 0) - (5.5 * 3600000);
+      const dateObj = new Date(utcMs);
+      const jd = getJulianDay(dateObj);
+      const ayanamsa = getLahiriAyanamsa(jd);
+
+      const sunSid = norm360(getTropicalSunLon(jd) - ayanamsa);
+      const moonSid = norm360(getTropicalMoonLon(jd) - ayanamsa);
+
+      const lagna = getSiderealLagna(jd, geo.lat, geo.lon, ayanamsa);
+
+      const { sunriseMin, sunsetMin } = getLocalSunriseSunsetIST(year, month, day, geo.lat, geo.lon);
+      const currentMinOfDay = h24 * 60 + m;
+
+      const civilDate = new Date(year, month - 1, day);
+      let weekdayIdx = civilDate.getDay();
+      if (currentMinOfDay < sunriseMin) {
+        weekdayIdx = (weekdayIdx + 6) % 7;
+      }
+      const vara = VARA_NAMES[weekdayIdx];
+
+      let horaOffset = 0;
+      if (currentMinOfDay >= sunriseMin && currentMinOfDay < sunsetMin) {
+        const dayLen = sunsetMin - sunriseMin;
+        const dayHoraDur = dayLen / 12.0;
+        horaOffset = Math.floor((currentMinOfDay - sunriseMin) / dayHoraDur);
+      } else {
+        const nightLen = 1440 - (sunsetMin - sunriseMin);
+        const nightHoraDur = nightLen / 12.0;
+        const minsSinceSunset = currentMinOfDay >= sunsetMin
+          ? (currentMinOfDay - sunsetMin)
+          : (1440 - sunsetMin + currentMinOfDay);
+        horaOffset = 12 + Math.floor(minsSinceSunset / nightHoraDur);
+      }
+      const startLordIdx = WEEKDAY_HORA_START[weekdayIdx];
+      const hora = CHALDEAN_HORA_LORDS[(startLordIdx + horaOffset) % 7];
+
+      const diff = norm360(moonSid - sunSid);
+      const tithiNum = Math.floor(diff / 12);
+      let tithi = '';
+      if (tithiNum < 14) {
+        tithi = `ಶುಕ್ಲ ${TITHI_NAMES[tithiNum]}`;
+      } else if (tithiNum === 14) {
+        tithi = 'ಪೂರ್ಣಿಮಾ (Purnima)';
+      } else if (tithiNum < 29) {
+        tithi = `ಕೃಷ್ಣ ${TITHI_NAMES[tithiNum - 15]}`;
+      } else {
+        tithi = 'ಅಮಾವಾಸ್ಯೆ (Amavasya)';
+      }
+
+      const nakIdx = Math.floor(moonSid / (360 / 27));
+      const nakshatra = NAKSHATRA_NAMES[nakIdx];
+
+      const sumLon = norm360(sunSid + moonSid);
+      const yogaIdx = Math.floor(sumLon / (360 / 27));
+      const yoga = YOGA_NAMES[yogaIdx];
+
+      const karanaHalf = Math.floor(diff / 6);
+      let karana = '';
+      if (karanaHalf === 0) {
+        karana = 'ಕಿಂಸ್ತುಘ್ನ';
+      } else if (karanaHalf >= 57) {
+        const fixedKaranas = ['ಶಕುನಿ', 'ಚತುಷ್ಪಾದ', 'ನಾಗವ'];
+        karana = fixedKaranas[karanaHalf - 57];
+      } else {
+        const movableKaranas = ['ಬವ', 'ಬಾಲವ', 'ಕೌಲವ', 'ತೈತಿಲ', 'ಗರಜ', 'ವಣಿಜ', 'ವಿಷ್ಟಿ (ಭದ್ರಾ)'];
+        karana = movableKaranas[(karanaHalf - 1) % 7];
+      }
+
+      return { lagna, hora, tithi, vara, nakshatra, yoga, karana };
+    }
+
+    function ensurePaymentPanchanga(payment) {
+      if (!payment) return payment;
+      if (payment.Lagna && payment.Hora && payment.Nakshatra && payment.Tithi && payment.Vara && payment.Yoga && payment.Karana) {
+        return payment;
+      }
+      const parsedTime = parseFormattedTime(payment.PaymentTime || '12:00 PM');
+      const geoToUse = parseGeoFromLabel(payment.Location) || currentGeo || UDUPI_DEFAULT;
+      const calc = calculatePanchangaAndHora(
+        payment.PaymentDate || getTodayDDMMYYYY(),
+        parsedTime.h || '12',
+        parsedTime.m || '00',
+        parsedTime.ap || 'PM',
+        geoToUse
+      );
+      return {
+        ...payment,
+        Lagna: payment.Lagna || payment.lagna || calc.lagna,
+        Hora: payment.Hora || payment.hora || calc.hora,
+        Tithi: payment.Tithi || payment.tithi || calc.tithi,
+        Vara: payment.Vara || payment.vara || calc.vara,
+        Nakshatra: payment.Nakshatra || payment.nakshatra || calc.nakshatra,
+        Yoga: payment.Yoga || payment.yoga || calc.yoga,
+        Karana: payment.Karana || payment.karana || calc.karana
+      };
+    }
+
+    function parseGeoFromLabel(locLabel) {
+      if (!locLabel) return null;
+      const m = String(locLabel).match(/(-?\d+(?:\.\d+)?)°\s*N,\s*(-?\d+(?:\.\d+)?)°\s*E/i);
+      if (m) {
+        return { lat: parseFloat(m[1]), lon: parseFloat(m[2]), label: locLabel };
+      }
+      return null;
+    }
+
+    // =========================================================================
+    // SAMPLE DATA (ONLY LOADED ON FIRST EVER LAUNCH)
+    // =========================================================================
+    function getInitialSampleData() {
+      const c1 = {
+        ID: 'CL_SAMPLE_101',
+        Name: 'ಶ್ರೀನಿವಾಸ ಉಪಾಧ್ಯಾಯ',
+        Phone: '9845123456',
+        DOB: '15/08/1984',
+        TOB: '07:45 AM',
+        POB: 'ಕುಂದಾಪುರ',
+        Notes: 'ಉದ್ಯೋಗ ಬದಲಾವಣೆ ಮತ್ತು ಗೃಹ ನಿರ್ಮಾಣದ ಬಗ್ಗೆ ವಿಚಾರಿಸಿದ್ದಾರೆ. ಗುರುವಾರ ಶ್ರೀ ದತ್ತಾತ್ರೇಯ ಸ್ತೋತ್ರ ಪಠಣ ಮತ್ತು ಶನಿವಾರ ತಿಲದಾನ ಮಾಡಲು ಸೂಚಿಸಲಾಗಿದೆ.',
+        CreatedDate: '10/11/2026, 10:30 AM',
+        UpdatedDate: '18/11/2026, 05:15 PM'
+      };
+      const c2 = {
+        ID: 'CL_SAMPLE_102',
+        Name: 'ಅನನ್ಯಾ ಕುಲಕರ್ಣಿ',
+        Phone: '9900876543',
+        DOB: '04/11/1996',
+        TOB: '04:20 PM',
+        POB: 'ಬೆಂಗಳೂರು',
+        Notes: 'ವಿವಾಹ ಯೋಗದ ಬಗ್ಗೆ ಸಮಾಲೋಚನೆ. ಮುಂದಿನ 6 ತಿಂಗಳಲ್ಲಿ ಉತ್ತಮ ಸಂಬಂಧ ಕೂಡಿಬರುವ ಯೋಗವಿದೆ. ಮಂಗಳವಾರ ಸುಬ್ರಹ್ಮಣ್ಯ ಸ್ವಾಮಿ ದರ್ಶನಕ್ಕೆ ಸೂಚಿಸಲಾಗಿದೆ.',
+        CreatedDate: '14/11/2026, 11:10 AM',
+        UpdatedDate: '14/11/2026, 11:10 AM'
+      };
+
+      const p1Meta = calculatePanchangaAndHora('10/11/2026', '10', '30', 'AM', UDUPI_DEFAULT);
+      const p2Meta = calculatePanchangaAndHora('18/11/2026', '05', '15', 'PM', UDUPI_DEFAULT);
+      const p3Meta = calculatePanchangaAndHora('14/11/2026', '11', '10', 'AM', UDUPI_DEFAULT);
+
+      const samplePayments = [
+        {
+          PaymentID: 'PAY_SAMPLE_201',
+          ClientID: c1.ID,
+          ClientName: c1.Name,
+          Amount: 500,
+          PaymentMode: 'UPI',
+          PaymentDate: '10/11/2026',
+          PaymentTime: '10:30 AM',
+          Location: UDUPI_DEFAULT.label,
+          Lagna: p1Meta.lagna,
+          Hora: p1Meta.hora,
+          Tithi: p1Meta.tithi,
+          Vara: p1Meta.vara,
+          Nakshatra: p1Meta.nakshatra,
+          Yoga: p1Meta.yoga,
+          Karana: p1Meta.karana
+        },
+        {
+          PaymentID: 'PAY_SAMPLE_202',
+          ClientID: c1.ID,
+          ClientName: c1.Name,
+          Amount: 1000,
+          PaymentMode: 'Cash',
+          PaymentDate: '18/11/2026',
+          PaymentTime: '05:15 PM',
+          Location: UDUPI_DEFAULT.label,
+          Lagna: p2Meta.lagna,
+          Hora: p2Meta.hora,
+          Tithi: p2Meta.tithi,
+          Vara: p2Meta.vara,
+          Nakshatra: p2Meta.nakshatra,
+          Yoga: p2Meta.yoga,
+          Karana: p2Meta.karana
+        },
+        {
+          PaymentID: 'PAY_SAMPLE_203',
+          ClientID: c2.ID,
+          ClientName: c2.Name,
+          Amount: 750,
+          PaymentMode: 'UPI',
+          PaymentDate: '14/11/2026',
+          PaymentTime: '11:10 AM',
+          Location: UDUPI_DEFAULT.label,
+          Lagna: p3Meta.lagna,
+          Hora: p3Meta.hora,
+          Tithi: p3Meta.tithi,
+          Vara: p3Meta.vara,
+          Nakshatra: p3Meta.nakshatra,
+          Yoga: p3Meta.yoga,
+          Karana: p3Meta.karana
+        }
+      ];
+
+      return { sampleClients: [c1, c2], samplePayments };
+    }
+
+    // =========================================================================
+    // INITIALIZATION & GPS AUTO-LOCATION
+    // =========================================================================
+    window.onload = function () {
+      populateMinuteDropdowns();
+
+      const alreadyInitialized = localStorage.getItem(KEY_INIT_FLAG);
+      if (!alreadyInitialized) {
+        const { sampleClients, samplePayments } = getInitialSampleData();
+        clients = sampleClients;
+        payments = samplePayments;
+        localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+        localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+        localStorage.setItem(KEY_INIT_FLAG, 'true');
+      } else {
+        try {
+          clients = JSON.parse(localStorage.getItem(KEY_CLIENTS)) || [];
+          const rawPayments = JSON.parse(localStorage.getItem(KEY_PAYMENTS)) || [];
+          payments = rawPayments.map(ensurePaymentPanchanga);
+          localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+        } catch (e) {
+          clients = [];
+          payments = [];
+        }
+      }
+
+      if (savedPin && savedPin.length === 4) {
+        document.getElementById('headerLockBtn').classList.remove('hidden');
+        document.getElementById('pinLockOverlay').classList.remove('hidden');
+        document.getElementById('pinUnlockInput').focus();
+      }
+
+      detectGPSLocation(false);
+      renderClientList();
+      applyDatePreset('thisMonth', true);
+      updateStatusStrip(`ಸಿದ್ಧವಾಗಿದೆ • ${clients.length} ಕ್ಲೈಂಟ್‌ಗಳು • ${payments.length} ಪೇಮೆಂಟ್ ದಾಖಲೆಗಳು`);
+
+      if (sheetUrl) {
+        syncWithGoogleSheet(true);
+      }
+    };
+
+    function populateMinuteDropdowns() {
+      const selects = [document.getElementById('clientTobMin'), document.getElementById('payMin')];
+      selects.forEach((sel, idx) => {
+        if (!sel) return;
+        for (let m = 0; m < 60; m++) {
+          const val = String(m).padStart(2, '0');
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = val;
+          sel.appendChild(opt);
+        }
+        if (idx === 1) sel.value = '00';
+      });
+    }
+
+    function detectGPSLocation(userTriggered = false) {
+      const gpsLabelEl = document.getElementById('gpsStatusText');
+      if (!navigator.geolocation) {
+        currentGeo = { ...UDUPI_DEFAULT };
+        gpsLabelEl.innerText = `📍 ${currentGeo.label}`;
+        if (userTriggered) showToast('📍 GPS ಲಭ್ಯವಿಲ್ಲ — ಉಡುಪಿ ಸ್ಥಳವನ್ನು ಬಳಸಲಾಗುತ್ತಿದೆ', 'info');
+        return;
+      }
+
+      if (userTriggered) {
+        gpsLabelEl.innerText = '📍 GPS ಹುಡುಕುತ್ತಿದೆ...';
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = Number(pos.coords.latitude.toFixed(4));
+          const lon = Number(pos.coords.longitude.toFixed(4));
+          currentGeo = {
+            lat,
+            lon,
+            label: `GPS (${lat}° N, ${lon}° E)`,
+            isGps: true
+          };
+          gpsLabelEl.innerText = `📍 ${currentGeo.label}`;
+          if (!document.getElementById('paymentModal').classList.contains('hidden')) {
+            refreshPaymentPanchangaPreview();
+          }
+          if (userTriggered) showToast(`✅ ನಿಖರ GPS ಸ್ಥಳ ಪಡೆಯಲಾಗಿದೆ: ${lat}° N, ${lon}° E`);
+        },
+        () => {
+          currentGeo = { ...UDUPI_DEFAULT };
+          gpsLabelEl.innerText = `📍 ${currentGeo.label}`;
+          if (userTriggered) showToast('📍 GPS ಅನುಮತಿ ಇಲ್ಲ — ಉಡುಪಿ ಸ್ಥಳವನ್ನು ಬಳಸಲಾಗುತ್ತಿದೆ', 'info');
+        },
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 300000 }
+      );
+    }
+
+    // =========================================================================
+    // NAVIGATION TABS & HELPERS
+    // =========================================================================
+    function switchMainTab(tabName) {
+      const vaultSec = document.getElementById('tabSectionVault');
+      const analyticsSec = document.getElementById('tabSectionAnalytics');
+      const btnVault = document.getElementById('tabBtnVault');
+      const btnAnalytics = document.getElementById('tabBtnAnalytics');
+
+      if (tabName === 'vault') {
+        vaultSec.classList.remove('hidden');
+        analyticsSec.classList.add('hidden');
+        btnVault.className = 'px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-cream text-maroon-900 border-t-2 border-x border-gold-500 shadow-xs transition flex items-center gap-1.5';
+        btnAnalytics.className = 'px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-maroon-800/60 text-kesari-100 hover:bg-maroon-800 transition flex items-center gap-1.5';
+      } else {
+        vaultSec.classList.add('hidden');
+        analyticsSec.classList.remove('hidden');
+        btnAnalytics.className = 'px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-cream text-maroon-900 border-t-2 border-x border-gold-500 shadow-xs transition flex items-center gap-1.5';
+        btnVault.className = 'px-3.5 sm:px-5 py-2 rounded-t-xl text-xs sm:text-sm font-bold bg-maroon-800/60 text-kesari-100 hover:bg-maroon-800 transition flex items-center gap-1.5';
+        renderAnalyticsDashboard();
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = type === 'error'
+        ? 'bg-red-800 border-red-400 text-white'
+        : type === 'info'
+        ? 'bg-maroon-900 border-gold-400 text-white'
+        : 'bg-emerald-800 border-emerald-400 text-white';
+
+      toast.className = `${colors} border px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm font-medium pointer-events-auto transition-all duration-300`;
+      toast.innerText = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function updateStatusStrip(msg) {
+      const el = document.getElementById('statusStrip');
+      if (el) el.innerText = msg;
+    }
+
+    function formatDateInput(input) {
+      const v = input.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length >= 5) {
+        input.value = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+      } else if (v.length >= 3) {
+        input.value = `${v.slice(0, 2)}/${v.slice(2)}`;
+      } else {
+        input.value = v;
+      }
+    }
+
+    function getTodayDDMMYYYY() {
+      const d = new Date();
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    }
+
+    function parseDDMMYYYY(str) {
+      if (!str) return null;
+      const parts = str.trim().split('/');
+      if (parts.length !== 3) return null;
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const y = parseInt(parts[2], 10);
+      if (!d || !m || !y || y < 1900) return null;
+      return new Date(y, m - 1, d, 0, 0, 0, 0);
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+      try {
+        const fallback = document.getElementById('clipboardFallback');
+        fallback.value = text;
+        fallback.select();
+        fallback.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        showToast(successMsg);
+      } catch (err) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => showToast(successMsg));
+        }
+      }
+    }
+
+    function openModal(id) {
+      if (id === 'settingsModal') {
+        document.getElementById('settingsSheetUrl').value = sheetUrl;
+        document.getElementById('settingsPinInput').value = savedPin;
+      }
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // =========================================================================
+    // CLIENT PROFILE CRUD (CLEAN PROFILE WITHOUT LAGNA/RASHI COLUMNS)
+    // =========================================================================
+    function insertTimestamp() {
+      const notesEl = document.getElementById('clientNotes');
+      const stamp = `\n--- [${getTodayDDMMYYYY()} ಸಮಾಲೋಚನೆ] ---\n`;
+      notesEl.value = (notesEl.value ? notesEl.value + '\n' : '') + stamp;
+      notesEl.focus();
+    }
+
+    function clearNotesField() {
+      document.getElementById('clientNotes').value = '';
+      document.getElementById('clientNotes').focus();
+    }
+
+    function buildFormattedTime(h, m, ap) {
+      if (!h && !m) return '';
+      return `${h || '12'}:${m || '00'} ${ap || 'AM'}`;
+    }
+
+    function parseFormattedTime(tobStr) {
+      if (!tobStr) return { h: '', m: '', ap: 'AM' };
+      const match = tobStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+      if (!match) return { h: '', m: '', ap: 'AM' };
+      return {
+        h: match[1].padStart(2, '0'),
+        m: match[2].padStart(2, '0'),
+        ap: (match[3] || 'AM').toUpperCase()
+      };
+    }
+
+    async function handleSaveClient(e) {
+      e.preventDefault();
+      const editId = document.getElementById('clientId').value;
+      const isEdit = Boolean(editId);
+      const id = editId || ('CL_' + Date.now());
+      const nowStr = new Date().toLocaleString('en-IN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+
+      const existing = clients.find(c => c.ID === id);
+      const tobFormatted = buildFormattedTime(
+        document.getElementById('clientTobHour').value,
+        document.getElementById('clientTobMin').value,
+        document.getElementById('clientTobAmPm').value
+      );
+
+      const clientObj = {
+        ID: id,
+        Name: document.getElementById('clientName').value.trim(),
+        Phone: document.getElementById('clientPhone').value.trim(),
+        DOB: document.getElementById('clientDob').value.trim(),
+        TOB: tobFormatted,
+        POB: document.getElementById('clientPob').value.trim(),
+        Notes: document.getElementById('clientNotes').value.trim(),
+        CreatedDate: existing ? existing.CreatedDate : nowStr,
+        UpdatedDate: nowStr
+      };
+
+      if (isEdit) {
+        const idx = clients.findIndex(c => c.ID === id);
+        if (idx !== -1) clients[idx] = clientObj;
+        payments.forEach(p => {
+          if (p.ClientID === id) p.ClientName = clientObj.Name;
+        });
+        localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+      } else {
+        clients.unshift(clientObj);
+      }
+
+      localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+      renderClientList();
+      resetClientForm();
+
+      showToast(isEdit ? `✅ "${clientObj.Name}" ವಿವರ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ!` : `✅ "${clientObj.Name}" ವಿವರ ಸೇವ್ ಆಗಿದೆ!`);
+      updateStatusStrip(`ಸೇವ್ ಆಗಿದೆ • ಒಟ್ಟು ${clients.length} ಕ್ಲೈಂಟ್‌ಗಳು`);
+
+      if (sheetUrl) {
+        try {
+          await postToAppsScript({ action: 'saveClient', client: clientObj });
+        } catch (err) { /* offline safe */ }
+      }
+    }
+
+    function editClient(id) {
+      const c = clients.find(item => item.ID === id);
+      if (!c) return;
+
+      document.getElementById('clientId').value = c.ID;
+      document.getElementById('clientName').value = c.Name || '';
+      document.getElementById('clientPhone').value = c.Phone || '';
+      document.getElementById('clientDob').value = c.DOB || '';
+
+      const parsedTob = parseFormattedTime(c.TOB);
+      document.getElementById('clientTobHour').value = parsedTob.h;
+      document.getElementById('clientTobMin').value = parsedTob.m;
+      document.getElementById('clientTobAmPm').value = parsedTob.ap;
+
+      document.getElementById('clientPob').value = c.POB || '';
+      document.getElementById('clientNotes').value = c.Notes || '';
+
+      document.getElementById('formHeading').innerText = '✏️ ಕ್ಲೈಂಟ್ ವಿವರ ತಿದ್ದುಪಡಿ';
+      document.getElementById('saveSubmitBtn').innerText = '🔄 ಬದಲಾವಣೆಗಳನ್ನು ಅಪ್‌ಡೇಟ್ ಮಾಡಿ';
+      document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+      closeModal('viewModal');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast(`✏️ "${c.Name}" ವಿವರ ತಿದ್ದುಪಡಿಗೆ ಸಿದ್ಧವಾಗಿದೆ`, 'info');
+    }
+
+    function resetClientForm() {
+      document.getElementById('clientForm').reset();
+      document.getElementById('clientId').value = '';
+      document.getElementById('formHeading').innerText = '📝 ಹೊಸ ಕ್ಲೈಂಟ್ ವಿವರ ದಾಖಲಿಸಿ';
+      document.getElementById('saveSubmitBtn').innerText = '💾 ಕ್ಲೈಂಟ್ ವಿವರ ಸೇವ್ ಮಾಡಿ';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      renderClientList();
+    }
+
+    function renderClientList() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', query.length === 0);
+
+      const container = document.getElementById('clientListContainer');
+      container.innerHTML = '';
+
+      const filtered = clients.filter(c => {
+        if (!query) return true;
+        return (
+          (c.Name && c.Name.toLowerCase().includes(query)) ||
+          (c.Phone && String(c.Phone).toLowerCase().includes(query)) ||
+          (c.POB && c.POB.toLowerCase().includes(query)) ||
+          (c.Notes && c.Notes.toLowerCase().includes(query))
+        );
+      });
+
+      document.getElementById('totalClientsBadge').innerText = `${filtered.length} ಕ್ಲೈಂಟ್‌ಗಳು`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 px-4 bg-kesari-50/50 rounded-2xl border border-dashed border-kesari-300">
+            <div class="text-3xl mb-2">🔍</div>
+            <p class="text-sm font-bold text-maroon-900">ಯಾವುದೇ ಕ್ಲೈಂಟ್ ವಿವರಗಳು ಕಂಡುಬಂದಿಲ್ಲ</p>
+            <p class="text-xs text-gray-500 mt-1">ಹೆಸರು ಅಥವಾ ಮೊಬೈಲ್ ನಂಬರ್ ಮೂಲಕ ಹುಡುಕಿ, ಅಥವಾ ಎಡಭಾಗದಲ್ಲಿ ಹೊಸ ಕ್ಲೈಂಟ್ ಸೇರಿಸಿ.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(c => {
+        const clientPays = payments.filter(p => p.ClientID === c.ID);
+        const visitCount = clientPays.length;
+        const totalPaid = clientPays.reduce((sum, p) => sum + (Number(p.Amount) || 0), 0);
+
+        const card = document.createElement('article');
+        card.className = 'bg-cream hover:bg-kesari-50/70 border border-kesari-200 hover:border-kesari-400 rounded-xl p-4 shadow-xs transition group';
+
+        card.innerHTML = `
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+            <div>
+              <h3 onclick="openClientDetailModal('${c.ID}')" class="text-base font-bold text-maroon-900 group-hover:text-kesari-700 cursor-pointer">
+                ${escapeHtml(c.Name)}
+              </h3>
+              <div class="text-xs text-gray-700 font-medium flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                <span>📞 <b>${escapeHtml(String(c.Phone))}</b></span>
+                ${c.DOB ? `<span>🎂 ${escapeHtml(c.DOB)}</span>` : ''}
+                ${c.TOB ? `<span>⏰ ${escapeHtml(c.TOB)}</span>` : ''}
+                ${c.POB ? `<span>📍 ${escapeHtml(c.POB)}</span>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-maroon-900 border border-amber-300 text-[11px] font-bold">
+                ಭೇಟಿಗಳು: ${visitCount}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold">
+                ಒಟ್ಟು ದಕ್ಷಿಣೆ ₹${totalPaid.toLocaleString('en-IN')}
+              </span>
+            </div>
+          </div>
+
+          ${c.Notes ? `
+            <div onclick="openClientDetailModal('${c.ID}')" class="mt-2 p-2.5 rounded-lg bg-white border-l-4 border-kesari-600 text-xs text-gray-800 whitespace-pre-line line-clamp-3 cursor-pointer">
+              ${escapeHtml(c.Notes)}
+            </div>
+          ` : ''}
+
+          <div class="mt-3 pt-2.5 border-t border-kesari-200/70 flex flex-wrap items-center justify-between gap-2">
+            <button type="button" onclick="openAddPaymentModal('${c.ID}')"
+              class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-kesari-600 to-maroon-800 hover:from-kesari-700 hover:to-maroon-900 text-white text-xs font-bold shadow-xs transition flex items-center gap-1">
+              + ₹ ಪೇಮೆಂಟ್ ಸೇರಿಸಿ
+            </button>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" onclick="editClient('${c.ID}')"
+                class="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 text-[11px] font-semibold transition">
+                ✏️ ತಿದ್ದುಪಡಿ
+              </button>
+              <button type="button" onclick="copyClientNotes('${c.ID}')"
+                class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 text-[11px] font-semibold transition">
+                📋 ನೋಟ್ಸ್ ಕಾಪಿ
+              </button>
+              <button type="button" onclick="shareWhatsApp('${c.ID}')"
+                class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-[11px] font-semibold transition">
+                💬 WhatsApp
+              </button>
+              <button type="button" onclick="confirmDeleteClient('${c.ID}')" title="ಅಳಿಸಿ"
+                class="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-semibold transition">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function copyClientNotes(id) {
+      const c = clients.find(item => item.ID === id);
+      if (!c) return;
+      const text = `🕉️ ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್ - ಸಮಾಲೋಚನೆ ವಿವರ\nಹೆಸರು: ${c.Name}\nಜನನ ವಿವರ: ${c.DOB || '-'}, ${c.TOB || '-'}, ${c.POB || '-'}\n\nವಿಶ್ಲೇಷಣೆ:\n${c.Notes || ''}`;
+      copyTextToClipboard(text, `📋 "${c.Name}" ಅವರ ನೋಟ್ಸ್ ಕಾಪಿ ಆಗಿದೆ!`);
+    }
+
+    function shareWhatsApp(id) {
+      const c = clients.find(item => item.ID === id);
+      if (!c) return;
+      let phone = String(c.Phone).replace(/\D/g, '');
+      if (phone.length === 10) phone = '91' + phone;
+      const msg = encodeURIComponent(`ನಮಸ್ಕಾರ ${c.Name} ಅವರೇ,\n🕉️ *ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್* ಜ್ಯೋತಿಷ್ಯ ಸಮಾಲೋಚನೆಯ ವಿವರಗಳು:\n\n${c.Notes || ''}`);
+      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    }
+
+    // =========================================================================
+    // MULTI-PAYMENT MODAL & AUTO-PANCHANGA CAPTURE
+    // =========================================================================
+    function openAddPaymentModal(clientId) {
+      const c = clients.find(item => item.ID === clientId);
+      if (!c) return;
+
+      document.getElementById('payClientId').value = c.ID;
+      document.getElementById('payModalClientSubtitle').innerText = `ಕ್ಲೈಂಟ್: ${c.Name} (${c.Phone})`;
+      document.getElementById('payAmount').value = '';
+      document.getElementById('payMode').value = 'UPI';
+
+      const now = new Date();
+      document.getElementById('payDate').value = getTodayDDMMYYYY();
+
+      const h24 = now.getHours();
+      const ap = h24 >= 12 ? 'PM' : 'AM';
+      let h12 = h24 % 12;
+      if (h12 === 0) h12 = 12;
+      document.getElementById('payHour').value = String(h12).padStart(2, '0');
+      document.getElementById('payMin').value = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('payAmPm').value = ap;
+
+      detectGPSLocation(false);
+      refreshPaymentPanchangaPreview();
+
+      openModal('paymentModal');
+      setTimeout(() => document.getElementById('payAmount').focus(), 100);
+    }
+
+    function refreshPaymentPanchangaPreview() {
+      const dStr = document.getElementById('payDate').value;
+      const h = document.getElementById('payHour').value;
+      const m = document.getElementById('payMin').value;
+      const ap = document.getElementById('payAmPm').value;
+
+      document.getElementById('payModalLocationTag').innerText = `📍 ${currentGeo.label}`;
+      const p = calculatePanchangaAndHora(dStr, h, m, ap, currentGeo);
+
+      const items = [
+        { label: 'ತತ್ಕಾಲ ಲಗ್ನ (Lagna)', val: p.lagna, highlight: true },
+        { label: 'ಗ್ರಹ ಹೋರೆ (Hora)', val: p.hora, highlight: true },
+        { label: 'ತಿಥಿ (Tithi)', val: p.tithi, highlight: false },
+        { label: 'ವಾರ (Vara)', val: p.vara, highlight: false },
+        { label: 'ನಕ್ಷತ್ರ (Nakshatra)', val: p.nakshatra, highlight: false },
+        { label: 'ಯೋಗ / ಕರಣ', val: `${p.yoga} • ${p.karana}`, highlight: false }
+      ];
+
+      document.getElementById('livePanchangaGrid').innerHTML = items.map(it => `
+        <div class="p-2 rounded-lg ${it.highlight ? 'bg-maroon-900 text-white border border-gold-500' : 'bg-white text-maroon-900 border border-kesari-200'}">
+          <div class="text-[10px] ${it.highlight ? 'text-kesari-200' : 'text-gray-500'}">${it.label}</div>
+          <div class="font-bold text-xs mt-0.5 ${it.highlight ? 'text-gold-400' : 'text-maroon-900'}">${escapeHtml(it.val)}</div>
+        </div>
+      `).join('');
+    }
+
+    async function handleSavePayment(e) {
+      e.preventDefault();
+      const clientId = document.getElementById('payClientId').value;
+      const c = clients.find(item => item.ID === clientId);
+      if (!c) return;
+
+      const amount = Number(document.getElementById('payAmount').value);
+      if (!amount || amount <= 0) {
+        showToast('⚠️ ದಯವಿಟ್ಟು ಸರಿಯಾದ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ', 'error');
+        return;
+      }
+
+      const mode = document.getElementById('payMode').value;
+      const payDate = document.getElementById('payDate').value.trim() || getTodayDDMMYYYY();
+      const h = document.getElementById('payHour').value;
+      const m = document.getElementById('payMin').value;
+      const ap = document.getElementById('payAmPm').value;
+      const payTime = `${h}:${m} ${ap}`;
+
+      const panchanga = calculatePanchangaAndHora(payDate, h, m, ap, currentGeo);
+
+      const paymentRecord = {
+        PaymentID: 'PAY_' + Date.now(),
+        ClientID: c.ID,
+        ClientName: c.Name,
+        Amount: amount,
+        PaymentMode: mode,
+        PaymentDate: payDate,
+        PaymentTime: payTime,
+        Location: currentGeo.label,
+        Lagna: panchanga.lagna,
+        Hora: panchanga.hora,
+        Tithi: panchanga.tithi,
+        Vara: panchanga.vara,
+        Nakshatra: panchanga.nakshatra,
+        Yoga: panchanga.yoga,
+        Karana: panchanga.karana
+      };
+
+      payments.unshift(paymentRecord);
+      localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+
+      closeModal('paymentModal');
+      renderClientList();
+      if (!document.getElementById('tabSectionAnalytics').classList.contains('hidden')) {
+        renderAnalyticsDashboard();
+      }
+      if (!document.getElementById('viewModal').classList.contains('hidden')) {
+        openClientDetailModal(c.ID);
+      }
+
+      showToast(`💰 ₹${amount} (${panchanga.lagna} • ${panchanga.hora}) ದಾಖಲಾಗಿದೆ!`);
+      updateStatusStrip(`ಪೇಮೆಂಟ್ ಸೇವ್ ಆಗಿದೆ • ${c.Name} (₹${amount})`);
+
+      if (sheetUrl) {
+        try {
+          await postToAppsScript({ action: 'savePayment', payment: paymentRecord });
+        } catch (err) { /* offline safe */ }
+      }
+    }
+
+    // =========================================================================
+    // CLIENT DETAIL MODAL (NOTES + CHRONOLOGICAL PAYMENT & PANCHANGA HISTORY)
+    // =========================================================================
+    function openClientDetailModal(clientId) {
+      const c = clients.find(item => item.ID === clientId);
+      if (!c) return;
+
+      const clientPays = payments.filter(p => p.ClientID === c.ID).map(ensurePaymentPanchanga);
+      const totalPaid = clientPays.reduce((s, p) => s + (Number(p.Amount) || 0), 0);
+
+      document.getElementById('viewModalTitle').innerText = c.Name;
+      document.getElementById('viewModalSubtitle').innerText =
+        `📞 ${c.Phone}  •  ಭೇಟಿಗಳು: ${clientPays.length}  •  ಒಟ್ಟು ದಕ್ಷಿಣೆ: ₹${totalPaid.toLocaleString('en-IN')}`;
+
+      const payRowsHtml = clientPays.length === 0
+        ? `<p class="text-xs text-gray-500 italic py-3 text-center bg-gray-50 rounded-xl">ಈ ಕ್ಲೈಂಟ್‌ಗೆ ಇನ್ನೂ ಯಾವುದೇ ಪೇಮೆಂಟ್ ದಾಖಲಾಗಿಲ್ಲ.</p>`
+        : clientPays.map(p => `
+            <div class="p-3 rounded-xl bg-kesari-50/70 border border-kesari-200 space-y-1.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="font-bold text-maroon-900 text-xs sm:text-sm">
+                  ₹${Number(p.Amount).toLocaleString('en-IN')}
+                  <span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] bg-white border border-kesari-300 text-kesari-800">${escapeHtml(p.PaymentMode)}</span>
+                </div>
+                <div class="text-[11px] text-gray-600 font-medium">
+                  📅 ${escapeHtml(p.PaymentDate)} • ⏰ ${escapeHtml(p.PaymentTime)}
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-1.5 text-[11px]">
+                <span class="px-2 py-0.5 rounded bg-maroon-900 text-gold-400 font-semibold">ಲಗ್ನ: ${escapeHtml(p.Lagna)}</span>
+                <span class="px-2 py-0.5 rounded bg-kesari-700 text-white font-semibold">${escapeHtml(p.Hora)}</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-kesari-200 text-gray-800">ತಿಥಿ: ${escapeHtml(p.Tithi)}</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-kesari-200 text-gray-800">${escapeHtml(p.Vara)}</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-kesari-200 text-gray-800">ನಕ್ಷತ್ರ: ${escapeHtml(p.Nakshatra)}</span>
+                <span class="px-2 py-0.5 rounded bg-white border border-kesari-200 text-gray-800">ಯೋಗ: ${escapeHtml(p.Yoga)} • ಕರಣ: ${escapeHtml(p.Karana)}</span>
+              </div>
+            </div>
+          `).join('');
+
+      document.getElementById('viewModalBody').innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-cream p-3.5 rounded-xl border border-kesari-200 text-xs">
+          <div><span class="text-gray-500">ಜನ್ಮ ದಿನಾಂಕ:</span> <b>${escapeHtml(c.DOB || '-')}</b></div>
+          <div><span class="text-gray-500">ಜನ್ಮ ಸಮಯ:</span> <b>${escapeHtml(c.TOB || '-')}</b></div>
+          <div><span class="text-gray-500">ಜನ್ಮ ಸ್ಥಳ:</span> <b>${escapeHtml(c.POB || '-')}</b></div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold text-maroon-900 mb-1.5">📜 ಜ್ಯೋತಿಷ್ಯ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಭವಿಷ್ಯವಾಣಿ ನೋಟ್ಸ್:</h4>
+          <div class="p-3.5 rounded-xl bg-cream border border-kesari-200 text-xs sm:text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">${escapeHtml(c.Notes || 'ಯಾವುದೇ ನೋಟ್ಸ್ ದಾಖಲಾಗಿಲ್ಲ.')}</div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-maroon-900">💰 ಪೇಮೆಂಟ್ ಮತ್ತು ತತ್ಕಾಲ ಪಂಚಾಂಗ ಇತಿಹಾಸ (${clientPays.length}):</h4>
+            <button type="button" onclick="openAddPaymentModal('${c.ID}')"
+              class="px-2.5 py-1 rounded-lg bg-kesari-600 text-white text-[11px] font-bold">
+              + ₹ ಪೇಮೆಂಟ್ ಸೇರಿಸಿ
+            </button>
+          </div>
+          <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+            ${payRowsHtml}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('viewModalFooter').innerHTML = `
+        <button type="button" onclick="editClient('${c.ID}')" class="px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold">✏️ ತಿದ್ದುಪಡಿ</button>
+        <button type="button" onclick="copyClientNotes('${c.ID}')" class="px-3 py-2 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-950 text-xs font-bold">📋 ನೋಟ್ಸ್ ಕಾಪಿ</button>
+        <button type="button" onclick="shareWhatsApp('${c.ID}')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">💬 WhatsApp ಕಳುಹಿಸಿ</button>
+      `;
+
+      openModal('viewModal');
+    }
+
+    // =========================================================================
+    // DELETE FLOWS (CLIENTS & INDIVIDUAL PAYMENTS)
+    // =========================================================================
+    function confirmDeleteClient(id) {
+      const c = clients.find(item => item.ID === id);
+      if (!c) return;
+      document.getElementById('deleteModalHeading').innerText = `"${c.Name}" ದಾಖಲೆ ಅಳಿಸಬೇಕೇ?`;
+      document.getElementById('deleteModalText').innerText = 'ಈ ಕ್ಲೈಂಟ್‌ನ ಪ್ರೊಫೈಲ್ ಮತ್ತು ನೋಟ್ಸ್ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿಹೋಗುತ್ತದೆ.';
+      document.getElementById('confirmDeleteBtn').onclick = async () => {
+        clients = clients.filter(item => item.ID !== id);
+        localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+        closeModal('deleteModal');
+        renderClientList();
+        showToast('🗑️ ಕ್ಲೈಂಟ್ ದಾಖಲೆ ಅಳಿಸಲಾಗಿದೆ');
+        if (sheetUrl) {
+          try {
+            await postToAppsScript({ action: 'deleteClient', ID: id });
+          } catch (e) {}
+        }
+      };
+      openModal('deleteModal');
+    }
+
+    function confirmDeletePayment(paymentId) {
+      const p = payments.find(item => item.PaymentID === paymentId);
+      if (!p) return;
+      document.getElementById('deleteModalHeading').innerText = `₹${p.Amount} ಪೇಮೆಂಟ್ ದಾಖಲೆ ಅಳಿಸಬೇಕೇ?`;
+      document.getElementById('deleteModalText').innerText = `${p.ClientName} (${p.PaymentDate}) ಅವರ ಈ ಪೇಮೆಂಟ್ ದಾಖಲೆ ಅಳಿಸಿಹೋಗುತ್ತದೆ.`;
+      document.getElementById('confirmDeleteBtn').onclick = async () => {
+        payments = payments.filter(item => item.PaymentID !== paymentId);
+        localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+        closeModal('deleteModal');
+        renderClientList();
+        renderAnalyticsDashboard();
+        showToast('🗑️ ಪೇಮೆಂಟ್ ದಾಖಲೆ ಅಳಿಸಲಾಗಿದೆ');
+        if (sheetUrl) {
+          try {
+            await postToAppsScript({ action: 'deletePayment', PaymentID: paymentId });
+          } catch (e) {}
+        }
+      };
+      openModal('deleteModal');
+    }
+
+    // =========================================================================
+    // TAB 2: INCOME & PANCHANGA WEALTH ANALYTICS ENGINE
+    // =========================================================================
+    let currentRangeLabel = 'ಈ ತಿಂಗಳು (This Month)';
+
+    function applyDatePreset(preset, silent = false) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.className = 'preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-50 text-maroon-900 border border-kesari-200 hover:bg-kesari-100 transition';
+      });
+
+      if (preset === 'thisMonth') {
+        const first = `01/${String(m + 1).padStart(2, '0')}/${y}`;
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const last = `${String(lastDay).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
+        document.getElementById('filterFromDate').value = first;
+        document.getElementById('filterToDate').value = last;
+        currentRangeLabel = 'ಈ ತಿಂಗಳು (This Month)';
+        document.getElementById('presetThisMonth').className = 'preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-600 text-white shadow-xs transition';
+      } else if (preset === 'lastMonth') {
+        const prevDate = new Date(y, m - 1, 1);
+        const py = prevDate.getFullYear();
+        const pm = prevDate.getMonth();
+        const first = `01/${String(pm + 1).padStart(2, '0')}/${py}`;
+        const lastDay = new Date(py, pm + 1, 0).getDate();
+        const last = `${String(lastDay).padStart(2, '0')}/${String(pm + 1).padStart(2, '0')}/${py}`;
+        document.getElementById('filterFromDate').value = first;
+        document.getElementById('filterToDate').value = last;
+        currentRangeLabel = 'ಕಳೆದ ತಿಂಗಳು (Last Month)';
+        document.getElementById('presetLastMonth').className = 'preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-600 text-white shadow-xs transition';
+      } else {
+        document.getElementById('filterFromDate').value = '';
+        document.getElementById('filterToDate').value = '';
+        currentRangeLabel = 'ಎಲ್ಲಾ ಕಾಲ (All Time)';
+        document.getElementById('presetAllTime').className = 'preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-600 text-white shadow-xs transition';
+      }
+
+      if (!silent) renderAnalyticsDashboard();
+    }
+
+    function applyCustomDateRange() {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.className = 'preset-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-kesari-50 text-maroon-900 border border-kesari-200 hover:bg-kesari-100 transition';
+      });
+      const f = document.getElementById('filterFromDate').value.trim();
+      const t = document.getElementById('filterToDate').value.trim();
+      currentRangeLabel = (f || t) ? `${f || 'ಆರಂಭ'} - ${t || 'ಇಂದಿನವರೆಗೆ'}` : 'ಎಲ್ಲಾ ಕಾಲ';
+      renderAnalyticsDashboard();
+    }
+
+    function renderAnalyticsDashboard() {
+      payments = payments.map(ensurePaymentPanchanga);
+      localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+
+      const fromDate = parseDDMMYYYY(document.getElementById('filterFromDate').value);
+      const toDate = parseDDMMYYYY(document.getElementById('filterToDate').value);
+      if (toDate) toDate.setHours(23, 59, 59, 999);
+
+      const filteredPays = payments.filter(p => {
+        const pDate = parseDDMMYYYY(p.PaymentDate);
+        if (!pDate) return true;
+        if (fromDate && pDate < fromDate) return false;
+        if (toDate && pDate > toDate) return false;
+        return true;
+      });
+
+      let totalAmt = 0, upiAmt = 0, upiCnt = 0, cashAmt = 0, cashCnt = 0, bankAmt = 0, bankCnt = 0;
+      filteredPays.forEach(p => {
+        const amt = Number(p.Amount) || 0;
+        totalAmt += amt;
+        if (p.PaymentMode === 'UPI') { upiAmt += amt; upiCnt++; }
+        else if (p.PaymentMode === 'Cash') { cashAmt += amt; cashCnt++; }
+        else { bankAmt += amt; bankCnt++; }
+      });
+
+      document.getElementById('kpiTotalIncome').innerText = `₹${totalAmt.toLocaleString('en-IN')}`;
+      document.getElementById('kpiDateLabel').innerText = currentRangeLabel;
+      document.getElementById('kpiTotalCount').innerText = filteredPays.length;
+      document.getElementById('kpiUpiTotal').innerText = `₹${upiAmt.toLocaleString('en-IN')}`;
+      document.getElementById('kpiUpiCount').innerText = `${upiCnt} ಪೇಮೆಂಟ್‌ಗಳು`;
+      document.getElementById('kpiCashTotal').innerText = `₹${cashAmt.toLocaleString('en-IN')}`;
+      document.getElementById('kpiCashCount').innerText = `${cashCnt} ಪೇಮೆಂಟ್‌ಗಳು`;
+      document.getElementById('kpiBankTotal').innerText = `₹${bankAmt.toLocaleString('en-IN')}`;
+      document.getElementById('kpiBankCount').innerText = `${bankCnt} ಪೇಮೆಂಟ್‌ಗಳು`;
+
+      const dimensions = [
+        { key: 'Lagna', title: 'ತತ್ಕಾಲ ಲಗ್ನ (Lagna)', icon: '🌅' },
+        { key: 'Hora', title: 'ಗ್ರಹ ಹೋರೆ (Planetary Hora)', icon: '⏳' },
+        { key: 'Nakshatra', title: 'ನಕ್ಷತ್ರ (Nakshatra)', icon: '✨' },
+        { key: 'Tithi', title: 'ತಿಥಿ (Tithi)', icon: '🌙' },
+        { key: 'Vara', title: 'ವಾರ (Vara)', icon: '📅' },
+        { key: 'Yoga', title: 'ಯೋಗ (Yoga)', icon: '🧘' },
+        { key: 'Karana', title: 'ಕರಣ (Karana)', icon: '⚡' }
+      ];
+
+      const rankingsGrid = document.getElementById('wealthRankingsGrid');
+      rankingsGrid.innerHTML = '';
+
+      dimensions.forEach(dim => {
+        const map = {};
+        filteredPays.forEach(p => {
+          const val = p[dim.key] || 'ತಿಳಿದಿಲ್ಲ';
+          if (!map[val]) map[val] = { name: val, total: 0, count: 0 };
+          map[val].total += Number(p.Amount) || 0;
+          map[val].count += 1;
+        });
+
+        const sorted = Object.values(map).sort((a, b) => b.total - a.total);
+        const topItem = sorted[0];
+
+        const listRows = sorted.length === 0
+          ? `<p class="text-[11px] text-gray-400 py-3 text-center">ಈ ಅವಧಿಯಲ್ಲಿ ಡೇಟಾ ಇಲ್ಲ</p>`
+          : sorted.slice(0, 4).map((item, idx) => `
+              <div class="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg ${idx === 0 ? 'bg-maroon-900 text-white font-bold shadow-xs' : 'bg-cream text-gray-800 border border-kesari-100'}">
+                <span class="truncate pr-2">${idx === 0 ? '👑 ' : `${idx + 1}. `}${escapeHtml(item.name)}</span>
+                <span class="shrink-0 ${idx === 0 ? 'text-gold-400' : 'text-maroon-900 font-semibold'}">
+                  ₹${item.total.toLocaleString('en-IN')} <span class="text-[10px] opacity-80">(${item.count})</span>
+                </span>
+              </div>
+            `).join('');
+
+        const card = document.createElement('div');
+        card.className = 'bg-kesari-50/50 rounded-xl border border-kesari-200 p-3.5 flex flex-col justify-between space-y-2.5';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between border-b border-kesari-200 pb-1.5 mb-2">
+              <span class="text-xs font-bold text-maroon-900">${dim.icon} ${dim.title}</span>
+              ${topItem ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gold-500 text-maroon-900">Top #1</span>` : ''}
+            </div>
+            <div class="space-y-1.5">
+              ${listRows}
+            </div>
+          </div>
+        `;
+        rankingsGrid.appendChild(card);
+      });
+
+      document.getElementById('ledgerRowCount').innerText = `${filteredPays.length} ದಾಖಲೆಗಳು`;
+      const tbody = document.getElementById('paymentLedgerTbody');
+      tbody.innerHTML = '';
+
+      if (filteredPays.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="13" class="py-10 text-center text-gray-500">
+              ಆಯ್ಕೆ ಮಾಡಿದ ದಿನಾಂಕದ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ಯಾವುದೇ ಪೇಮೆಂಟ್ ದಾಖಲೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filteredPays.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-kesari-50/70 transition whitespace-nowrap';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-medium text-gray-800">${escapeHtml(p.PaymentDate)} <span class="text-gray-500">${escapeHtml(p.PaymentTime)}</span></td>
+          <td class="py-2.5 px-3 font-bold text-maroon-900">${escapeHtml(p.ClientName)}</td>
+          <td class="py-2.5 px-3 font-bold text-emerald-700">₹${Number(p.Amount).toLocaleString('en-IN')}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-kesari-100 text-maroon-900 font-semibold">${escapeHtml(p.PaymentMode)}</span></td>
+          <td class="py-2.5 px-3 font-bold text-kesari-800">${escapeHtml(p.Lagna)}</td>
+          <td class="py-2.5 px-3 font-bold text-maroon-900">${escapeHtml(p.Hora)}</td>
+          <td class="py-2.5 px-3 text-gray-700">${escapeHtml(p.Tithi)}</td>
+          <td class="py-2.5 px-3 text-gray-700">${escapeHtml(p.Vara)}</td>
+          <td class="py-2.5 px-3 font-semibold text-gray-800">${escapeHtml(p.Nakshatra)}</td>
+          <td class="py-2.5 px-3 text-gray-700">${escapeHtml(p.Yoga)}</td>
+          <td class="py-2.5 px-3 text-gray-700">${escapeHtml(p.Karana)}</td>
+          <td class="py-2.5 px-3 text-[11px] text-gray-500">${escapeHtml(p.Location || '-')}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button type="button" onclick="confirmDeletePayment('${p.PaymentID}')" title="ಅಳಿಸಿ"
+              class="px-2 py-1 rounded bg-red-50 hover:bg-red-100 text-red-700 font-bold">
+              🗑️
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =========================================================================
+    // KANNADA VOICE TYPING (kn-IN)
+    // =========================================================================
+    let activeRecognition = null;
+    function toggleVoiceTyping() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('⚠️ ನಿಮ್ಮ ಬ್ರೌಸರ್ ಧ್ವನಿ ಟೈಪಿಂಗ್ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ (Chrome ಬಳಸಿ)', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('voiceBtn');
+      if (activeRecognition) {
+        activeRecognition.stop();
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'kn-IN';
+      recognition.interimResults = false;
+      activeRecognition = recognition;
+
+      recognition.onstart = () => {
+        btn.classList.add('bg-red-600', 'text-white', 'border-red-700', 'recording-pulse');
+        btn.classList.remove('bg-kesari-100', 'text-kesari-900');
+        btn.innerText = '🔴 ಮಾತನಾಡಿ...';
+      };
+
+      recognition.onresult = (event) => {
+        const spoken = event.results[0][0].transcript;
+        const notes = document.getElementById('clientNotes');
+        notes.value += (notes.value && !notes.value.endsWith('\n') ? ' ' : '') + spoken;
+      };
+
+      recognition.onerror = () => {
+        showToast('⚠️ ಧ್ವನಿ ಗ್ರಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ, ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ', 'error');
+      };
+
+      recognition.onend = () => {
+        activeRecognition = null;
+        btn.classList.remove('bg-red-600', 'text-white', 'border-red-700', 'recording-pulse');
+        btn.classList.add('bg-kesari-100', 'text-kesari-900');
+        btn.innerText = '🎤 ಧ್ವನಿ ಟೈಪಿಂಗ್';
+      };
+
+      recognition.start();
+    }
+
+    // =========================================================================
+    // GOOGLE SHEETS SYNC (CLIENTS + PAYMENTS), PIN LOCK & JSON BACKUP
+    // =========================================================================
+    function isValidAppsScriptUrl(url) {
+      return /^https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_-]+\/exec/.test(url.trim());
+    }
+
+    async function postToAppsScript(payloadObj) {
+      const response = await fetch(sheetUrl, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payloadObj)
+      });
+      return response.text();
+    }
+
+    async function syncWithGoogleSheet(silent = false) {
+      if (!sheetUrl) {
+        if (!silent) {
+          showToast('⚙️ ಮೊದಲು ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ Apps Script Web App URL ಸೇರಿಸಿ', 'info');
+          openModal('settingsModal');
+        }
+        return;
+      }
+
+      if (sheetUrl.includes('docs.google.com/spreadsheets')) {
+        updateStatusStrip('⚠️ ತಪ್ಪಾದ ಲಿಂಕ್: Google Sheet ಬದಲಿಗೆ Apps Script (/exec) URL ಹಾಕಿ');
+        if (!silent) {
+          showToast('⚠️ ನೀವು ಸಾಮಾನ್ಯ Google Sheet ಲಿಂಕ್ ಹಾಕಿದ್ದೀರಿ! ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ Apps Script (/exec) URL ಹಾಕಿ.', 'error');
+          openModal('settingsModal');
+        }
+        return;
+      }
+
+      updateStatusStrip('🔄 Google Sheet ಜೊತೆ ಸಿಂಕ್ ಆಗುತ್ತಿದೆ...');
+      try {
+        payments = payments.map(ensurePaymentPanchanga);
+        localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+
+        await postToAppsScript({ action: 'syncAll', clients, payments });
+
+        const res = await fetch(sheetUrl, { method: 'GET', redirect: 'follow' });
+        const text = await res.text();
+        const json = JSON.parse(text);
+
+        if (json.status === 'success') {
+          if (Array.isArray(json.clients) && json.clients.length > 0) {
+            clients = json.clients.reverse();
+            localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+          }
+          if (Array.isArray(json.payments) && json.payments.length > 0) {
+            payments = json.payments.reverse().map(ensurePaymentPanchanga);
+            localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+          }
+          renderClientList();
+          if (!document.getElementById('tabSectionAnalytics').classList.contains('hidden')) {
+            renderAnalyticsDashboard();
+          }
+          updateStatusStrip(`☁️ ಸಿಂಕ್ ಯಶಸ್ವಿ • ${clients.length} ಕ್ಲೈಂಟ್‌ಗಳು • ${payments.length} ಪೇಮೆಂಟ್‌ಗಳು`);
+          if (!silent) showToast('☁️ Google Sheet ಜೊತೆ ಸಂಪೂರ್ಣ ಸಿಂಕ್ ಆಗಿದೆ!');
+        } else {
+          throw new Error(json.message || 'Sync error');
+        }
+      } catch (err) {
+        updateStatusStrip('⚠️ ಕ್ಲೌಡ್ ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ (Apps Script URL ಅಥವಾ ಇಂಟರ್ನೆಟ್ ಪರಿಶೀಲಿಸಿ)');
+        if (!silent) {
+          showToast('⚠️ ಸಿಂಕ್ ವಿಫಲವಾಗಿದೆ! Apps Script Deploy ಮಾಡುವಾಗ "Who has access: Anyone" ಇರುವುದನ್ನು ಖಚಿತಪಡಿಸಿ.', 'error');
+        }
+      }
+    }
+
+    function saveSheetUrlSetting() {
+      const enteredUrl = document.getElementById('settingsSheetUrl').value.trim();
+      if (!enteredUrl) {
+        sheetUrl = '';
+        localStorage.removeItem(KEY_SHEET_URL);
+        closeModal('settingsModal');
+        showToast('Google Sheet URL ತೆಗೆದುಹಾಕಲಾಗಿದೆ', 'info');
+        return;
+      }
+
+      if (enteredUrl.includes('docs.google.com/spreadsheets')) {
+        showToast('⚠️ ಇದು ಸಾಮಾನ್ಯ Google Sheet ಲಿಂಕ್! ದಯವಿಟ್ಟು Extensions > Apps Script > Deploy ನಿಂದ ಸಿಗುವ "/exec" ಲಿಂಕ್ ಹಾಕಿ.', 'error');
+        return;
+      }
+
+      if (!isValidAppsScriptUrl(enteredUrl)) {
+        showToast('⚠️ ದಯವಿಟ್ಟು ಸರಿಯಾದ Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec) ಹಾಕಿ.', 'error');
+        return;
+      }
+
+      sheetUrl = enteredUrl;
+      localStorage.setItem(KEY_SHEET_URL, sheetUrl);
+      closeModal('settingsModal');
+      syncWithGoogleSheet(false);
+    }
+
+    function copyAppsScriptCode() {
+      const code = document.getElementById('appsScriptTemplate').value;
+      copyTextToClipboard(code, '📋 Google Apps Script ಕೋಡ್ ಕಾಪಿ ಆಗಿದೆ!');
+    }
+
+    // PIN Security
+    function savePinSetting() {
+      const val = document.getElementById('settingsPinInput').value.trim();
+      if (!/^\d{4}$/.test(val)) {
+        showToast('⚠️ ದಯವಿಟ್ಟು 4 ಅಂಕಿಗಳನ್ನು ನಮೂದಿಸಿ (ಉದಾ: 1234)', 'error');
+        return;
+      }
+      savedPin = val;
+      localStorage.setItem(KEY_PIN, savedPin);
+      document.getElementById('headerLockBtn').classList.remove('hidden');
+      showToast('🔒 4-ಅಂಕಿಯ ಸುರಕ್ಷತಾ PIN ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ!');
+    }
+
+    function removePinSetting() {
+      savedPin = '';
+      localStorage.removeItem(KEY_PIN);
+      document.getElementById('settingsPinInput').value = '';
+      document.getElementById('headerLockBtn').classList.add('hidden');
+      showToast('🔓 PIN ಲಾಕ್ ತೆಗೆದುಹಾಕಲಾಗಿದೆ', 'info');
+    }
+
+    function lockApp() {
+      if (!savedPin) return;
+      document.getElementById('pinUnlockInput').value = '';
+      document.getElementById('pinErrorMsg').innerText = '';
+      document.getElementById('pinLockOverlay').classList.remove('hidden');
+      document.getElementById('pinUnlockInput').focus();
+    }
+
+    function checkPinAutoSubmit(el) {
+      if (el.value.length === 4) verifyPin();
+    }
+
+    function verifyPin() {
+      const entered = document.getElementById('pinUnlockInput').value;
+      if (entered === savedPin) {
+        document.getElementById('pinLockOverlay').classList.add('hidden');
+        document.getElementById('pinUnlockInput').value = '';
+        document.getElementById('pinErrorMsg').innerText = '';
+      } else {
+        document.getElementById('pinErrorMsg').innerText = '❌ ತಪ್ಪಾದ PIN! ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.';
+        document.getElementById('pinUnlockInput').value = '';
+      }
+    }
+
+    // JSON Backup & Restore
+    function exportBackupJSON() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        clients,
+        payments
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Veda_Astrolight_Vault_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('⬇️ ಪೂರ್ಣ ಬ್ಯಾಕಪ್ ಫೈಲ್ ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ!');
+    }
+
+    function importBackupJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && Array.isArray(parsed.clients)) {
+            clients = parsed.clients;
+            payments = Array.isArray(parsed.payments) ? parsed.payments.map(ensurePaymentPanchanga) : [];
+            localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+            localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+            renderClientList();
+            renderAnalyticsDashboard();
+            closeModal('settingsModal');
+            showToast(`✅ ${clients.length} ಕ್ಲೈಂಟ್‌ಗಳು & ${payments.length} ಪೇಮೆಂಟ್‌ಗಳನ್ನು ರಿಸ್ಟೋರ್ ಮಾಡಲಾಗಿದೆ!`);
+          } else {
+            showToast('⚠️ ತಪ್ಪಾದ ಬ್ಯಾಕಪ್ ಫೈಲ್ ಮಾದರಿ', 'error');
+          }
+        } catch (err) {
+          showToast('⚠️ ಫೈಲ್ ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ', 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function clearSampleRecords() {
+      clients = clients.filter(c => !String(c.ID).startsWith('CL_SAMPLE_'));
+      payments = payments.filter(p => !String(p.PaymentID).startsWith('PAY_SAMPLE_'));
+      localStorage.setItem(KEY_CLIENTS, JSON.stringify(clients));
+      localStorage.setItem(KEY_PAYMENTS, JSON.stringify(payments));
+      renderClientList();
+      renderAnalyticsDashboard();
+      closeModal('settingsModal');
+      showToast('🧹 ಸ್ಯಾಂಪಲ್ ದಾಖಲೆಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ', 'info');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
