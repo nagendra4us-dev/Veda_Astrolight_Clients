@@ -1,9 +1,9 @@
 {
-  "id": "/index.html",
+  "id": "/",
   "name": "ವೇದ ಆಸ್ಟ್ರೋಲೈಟ್ - ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್",
   "short_name": "ಕ್ಲೈಂಟ್ ವಾಲ್ಟ್",
   "description": "Veda Astrolight Client Management & Consultation Vault",
-  "start_url": "/index.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
