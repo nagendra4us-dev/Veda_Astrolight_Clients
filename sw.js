@@ -1,7 +1,6 @@
-const CACHE_NAME = 'veda-client-vault-v1';
+const CACHE_NAME = 'veda-client-vault-v2';
 const CORE_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json'
 ];
 
